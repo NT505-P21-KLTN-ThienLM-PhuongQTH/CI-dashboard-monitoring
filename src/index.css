@@ -1,3 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* {
+  font-family: 'Roboto', sans-serif;
+  padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body,
+:root,
+.app {
+  height: 100%;
+  width: 100%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--base-color));
+}
+
+@layer base {
+  :root {
+    --background: 0 0 99;
+    --primary: 83 35 79;
+    --secondary: 83 40 70;
+    --base-outline: 166 94 14;
+    --base-color: 0 0 13;
+    --gray-50: 210 20 98;
+    --gray-100: 220 14 96;
+    --gray-200: 220 14 92;
+    --gray-300: 220 14 88;
+    --gray-400: 218 11 65;
+    --gray-500: 220 9 46;
+    --gray-600: 215 14 34;
+    --gray-700: 217 19 27;
+    --gray-800: 215 28 17;
+    --gray-900: 221 39 11;
+    --gray-950: 209 33 12;
+    --neutral-50: 0 0 98;
+    --neutral-100: 0 0 96;
+    --neutral-200: 0 0 90;
+    --neutral-300: 0 0 83;
+    --neutral-400: 0 0 64;
+    --neutral-500: 0 0 46;
+    --neutral-600: 0 0 32;
+    --neutral-700: 0 0 25;
+    --neutral-800: 0 0 15;
+    --neutral-900: 0 0 9;
+    --neutral-950: 0 0 4;
+  }
+
+  .dark {
+    --background: 0 0 9;
+    --primary: 120 32 70;
+    --secondary: 155 80 36;
+    --base-color: 0 0 100;
+  }
+}

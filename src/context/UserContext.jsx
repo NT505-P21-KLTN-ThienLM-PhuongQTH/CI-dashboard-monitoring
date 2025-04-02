@@ -1,41 +1,49 @@
-import React from "react";
-const UserContext = React.createContext({ id:"", userName: "", auth: false });
+import { createContext, useContext, useEffect, useState } from 'react';
+
+const UserContext = createContext({ id: '', name: '', role: '', auth: false });
+
+export const useUser = () => useContext(UserContext);
 
 const UserProvider = ({ children }) => {
-  const [user, setUser] = React.useState(
-    sessionStorage.getItem("user")
-      ? JSON.parse(sessionStorage.getItem("user"))
-      : { id:"", userName: "", auth: false }
+  const [user, setUser] = useState(
+    sessionStorage.getItem('user')
+      ? JSON.parse(sessionStorage.getItem('user'))
+      : { id: '', name: '', role: '', auth: false }
   );
-  React.useEffect(() => {
+
+  useEffect(() => {
     if (!user.auth) {
-      if (window.location.pathname !== "/login")
-      window.location.href = "/login";
+      const allowedPaths = ['/login', '/register'];
+      if (!allowedPaths.includes(window.location.pathname)) {
+        window.location.href = '/login';
+      }
     }
-  },[user.auth]);
+  }, [user.auth]);
+
   const login = (user) => {
     setUser({
-      id:user.id,
-      userName: user.username,
+      id: user.id,
+      name: user.name,
+      role: user.role[0],
       auth: true,
     });
-    sessionStorage.setItem("user", JSON.stringify({ id:user.id, userName: user.username, auth: true }));
+    sessionStorage.setItem(
+      'user',
+      JSON.stringify({
+        id: user.id,
+        name: user.name,
+        role: user.role[0],
+        auth: true,
+      })
+    );
   };
 
   const logout = () => {
-    sessionStorage.removeItem("user");
-    setUser(() => ({
-      id: "",
-      userName: "",
-      auth: false,
-    }));
+    setUser({ id: '', name: '', role: '', auth: false });
+    sessionStorage.removeItem('user');
   };
 
-  return (
-    <UserContext.Provider value={{ user, login, logout }}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={{ user, login, logout }}>{children}</UserContext.Provider>;
 };
 
 export { UserContext, UserProvider };
