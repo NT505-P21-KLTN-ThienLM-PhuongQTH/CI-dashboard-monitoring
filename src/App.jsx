@@ -18,6 +18,10 @@ function App() {
         </UserProvider>
       </BrowserRouter>
     </main>
+  );
+}
+
+export default App;
 
   //   <UserProvider>
   //     <BrowserRouter>
@@ -45,7 +49,3 @@ function App() {
   //       </div>
   //     </BrowserRouter>
   // </UserProvider>
-  );
-}
-
-export default App;

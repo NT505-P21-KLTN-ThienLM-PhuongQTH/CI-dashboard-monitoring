@@ -5,6 +5,7 @@ import useAuthentication from '../../hook/useAuthentication';
 import TextField from '../TextField/TextField';
 import Button from '../Button/Button';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 Form.propTypes = {
     formType: PropTypes.oneOf(['login', 'register']).isRequired,
@@ -18,12 +19,33 @@ function Form({ formType, heading, subHeading, handleResponse }) {
     const { values, handleChange } = useForm(initialValues);
     const { authenticate, loading, error, setError } = useAuthentication(formType);
 
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const isPasswordStrong = (password) => {
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+        return strongPasswordRegex.test(password);
+    };
+
     const onSubmit = async (event) => {
         event.preventDefault();
+        console.log('Form values:', values); // Log the form values to check if they are correct
+        if (formType === 'register') {
+            if (values.password !== values.confirmPassword) {
+              alert('Passwords do not match!');
+              return;
+            }
+            if (!isPasswordStrong(values.password)) {
+              alert(
+                'Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character (e.g., !@#$%^&*).'
+              );
+              return;
+            }
+          }
         try {
-            console.log(values);
             const response = await authenticate(values);
-        if (response) {
+            console.log('Response:', response); // Log the response to check if it's correct
+            if (response.success) {
                 handleResponse(response);
                 setError(null);
             }
@@ -33,7 +55,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
     };
 
     return (
-        <div className='w-11/12 max-w-[700px] px-10 py-20 rounded-3xl bg-white border-2 border-gray-100' onSubmit={onSubmit}>
+        <form className='w-11/12 max-w-[700px] px-10 py-20 rounded-3xl bg-white border-2 border-gray-100' onSubmit={onSubmit}>
             <h1 className='text-5xl font-semibold'>{heading}</h1>
             <p className='font-medium text-lg text-gray-500 mt-4'>{subHeading}</p>
             <div className='mt-10'>
@@ -43,7 +65,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
                     placeholder='Full Name'
                     name="name"
                     type="text"
-                    value={values.fullName}
+                    value={values.name}
                     onChange={(e) => handleChange(e)}
                     required={true}
                 />
@@ -88,7 +110,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
                 )}
                 <div className='flex flex-col gap-y-4'>
                     <div className="w-full h-[0.8px] mt-3"></div>
-                    {error && <p className="text-red-500 text-[0.9rem] mt- font-medium">{error.response.data.error}</p>}
+                    {error && <p className="text-red-500 text-[0.9rem] mt- font-medium">{error.message}</p>}
                     <Button type="submit" disabled={loading}>
                         {loading ? 'Loading...' : formType === 'login' ? 'Login' : 'Register'}
                     </Button>
@@ -129,7 +151,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
                     )}
                 </div>
             </div>
-        </div>
+        </form>
     );
 }
 

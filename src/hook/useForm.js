@@ -5,7 +5,7 @@ const useForm = (initialValues) => {
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
-    console.log(event.target);
+    // console.log(event.target);
     setValues({
       ...values,
       [name]: type === 'checkbox' ? checked : value,

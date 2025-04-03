@@ -4,12 +4,14 @@ import Form from "../../components/Form/Form";
 
 const RegisterPage = () => {
 
-  const { user, login } = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   if (user.auth) window.location.href = '/';
 
-  const handleSubmit = (data) => {
-    login(data.user);
+  const handleSubmit = (response) => {
+    if (response.success) {
+      window.location.href = '/';
+    }
   };
 
   return (

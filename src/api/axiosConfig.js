@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://app.th1enlm02.live/api/v1';
+const BASE_URL =  'http://localhost:5000/api/';
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -15,9 +15,21 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log('Request sent:', config);
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+      console.error('Response error:', error);
+      return Promise.reject(error);
+  }
 );
 
 export default axiosInstance;
