@@ -60,6 +60,7 @@ const UserProvider = ({ children }) => {
           error: error.toString(),
         };
         console.error('Register error details:', errorDetails);
+        const errorMessage = error.response?.data?.message || 'Registration failed';
         return { success: false, message: errorMessage };
     }
   };

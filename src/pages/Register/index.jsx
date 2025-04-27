@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { UserContext } from '../../context/UserContext';
-import Form from "../../components/Form/Form";
+import { UserContext } from '../../contexts/UserContext';
+import Form from "../../components/Form";
 
 const RegisterPage = () => {
 

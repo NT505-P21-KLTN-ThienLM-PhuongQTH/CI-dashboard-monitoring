@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useUser } from '../context/UserContext';
+import { useUser } from '../contexts/UserContext';
 
 const useAuthentication = (formType) => {
     const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ const useAuthentication = (formType) => {
         } catch (err) {
             console.error('Authentication error:', err);
             setLoading(false);
-            setError(err.response ? err.response.data : { message: 'An error occurred' });
+            setError(err.response ? err.response.data : { message: err.message });
             throw err;
         }
     };

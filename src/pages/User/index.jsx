@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import DataTable from '../../components/DataTable';
+import DataTable from '../../components/DataTable/SimpleDataTable';
 
-function Customer() {
+function User() {
   const [customers, setCustomers] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
@@ -116,4 +116,4 @@ function Customer() {
   );
 }
 
-export default Customer;
+export default User;

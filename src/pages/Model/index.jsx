@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import DataTable from "../../components/DataTable";
-function Author() {
+import DataTable from "../../components/DataTable/SimpleDataTable";
+function Model() {
   const [products, setProducts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    async function fetchTacGia() {
-      fetch("http://localhost:8080/api/tacgia/getalltacgia")
+    async function fetchProducts() {
+      fetch("http://localhost:8080/api/danhmuc/getalldanhmuc")
         .then((response) => {
           return response.json();
         })
@@ -15,28 +14,22 @@ function Author() {
           setProducts(data);
         });
     }
-    fetchTacGia();
+    fetchProducts();
   }, []);
-
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const filteredAuthors = products.filter(author =>
-    author.tenTacGia.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const productHeaders = [
     {
       label: "ID",
-      className: "relative w-12 px-6 sm:w-16 sm:px-8",
-      render: (item) => item.id,
+      className: "relative text-sm w-12 px-6 sm:w-16 sm:px-8",
+      render: (product) => product.id,
     },
     {
-      label: "Tên",
+      label: "Tên danh mục",
       className:
-        "px-3 py-4 text-left text-sm font-semibold tracking-wide text-slate-900 whitespace-nowrap",
-      render: (item) => <a href={`/tac-gia/${item.id}`}>{item.tenTacGia}</a>,
+        "px-3 py-4 text-left text-sm tracking-wide text-slate-900 whitespace-nowrap",
+      render: (product) => (
+        <a href={`/danh-muc/${product.id}`}>{product.tenDanhMuc}</a>
+      ),
     },
     {
       label: "Số lượng sách",
@@ -49,16 +42,13 @@ function Author() {
     <div className="m-8">
       <div className="px-4 sm:flex sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div>
-          <h1 className="text-2xl font-medium text-slate-900">Tác giả</h1>
+          <h1 className="text-2xl font-medium text-slate-900">Danh mục</h1>
         </div>
-        <a href="/tac-gia/create">
-          <div className="mt-4 flex sm:mt-0 sm:ml-4">
-            <button className="px-4 py-2 bg-blue-400 text-white rounded-md block w-full order-0 sm:order-1 sm:ml-3">
-              Thêm tác giả
-            </button>
-          </div>
-        </a>
-
+        <div className="mt-4 flex sm:mt-0 sm:ml-4">
+          <a href="/danh-muc/them" className="px-4 py-2 bg-blue-400 text-white rounded-md block w-full order-0 sm:order-1 sm:ml-3">
+            Thêm danh mục
+          </a>
+        </div>
       </div>
 
       <div className="p-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
@@ -83,19 +73,16 @@ function Author() {
                 </svg>
               </div>
               <input
-                className="appearance-none w-full border border-slate-300 p-2 pl-10 rounded-md disabled:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Tìm kiếm tác giả"
-                value={searchQuery}
-                onChange={handleSearchChange}
+                className="appearance-none w-full border border-slate-300 p-2 pl-10 rounded-md  disabled:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed "
+                placeholder="Tìm kiếm danh mục"
               />
             </div>
           </div>
 
-          <DataTable data={filteredAuthors} headers={productHeaders} />
+          <DataTable data={products} headers={productHeaders} />
         </div>
       </div>
     </div>
   );
 }
-
-export default Author;
+export default Model;
