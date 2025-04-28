@@ -18,7 +18,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const { Option } = Select;
 
-const PipelineChart = ({ selectedRepoId, selectedBranch }) => {
+const PipelineChart = ({ selectedRepoId, selectedBranch, selectedWorkflowId }) => {
   const { user } = useContext(UserContext);
   const [timeUnit, setTimeUnit] = useState('day');
   const [chartDataRaw, setChartDataRaw] = useState([]);
@@ -26,7 +26,7 @@ const PipelineChart = ({ selectedRepoId, selectedBranch }) => {
 
   useEffect(() => {
     const fetchPipelineData = async () => {
-      if (!selectedRepoId || !selectedBranch) {
+      if (!selectedRepoId || !selectedBranch || !selectedWorkflowId) {
         setChartDataRaw([]);
         return;
       }
@@ -39,6 +39,9 @@ const PipelineChart = ({ selectedRepoId, selectedBranch }) => {
         }
         if (selectedBranch) {
           url += `&branch=${selectedBranch}`;
+        }
+        if (selectedWorkflowId) {
+          url += `&workflow_id=${selectedWorkflowId}`;
         }
 
         const response = await fetch(url);
@@ -59,7 +62,7 @@ const PipelineChart = ({ selectedRepoId, selectedBranch }) => {
     if (user?.id) {
       fetchPipelineData();
     }
-  }, [user?.id, timeUnit, selectedRepoId, selectedBranch]);
+  }, [user?.id, timeUnit, selectedRepoId, selectedBranch, selectedWorkflowId]);
 
   const labels = chartDataRaw.map((item) => item.timeText);
   const chartData = {
