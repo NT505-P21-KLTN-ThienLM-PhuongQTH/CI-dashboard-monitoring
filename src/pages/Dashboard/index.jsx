@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Select, message, Card, Statistic, Row, Col } from "antd";
-import PageHeader from "../../components/PageHeader";
-import PipelineChart from "../../components/Charts/PipelineChart";
-import PipelineStatsCards from "../../components/StatsCard/PipelineStatsCards";
+import { Select, message } from "antd";
 import { UserContext } from "../../contexts/UserContext";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import CardMetrics from "../../components/Dashboard/CardMetrics";
+import WeeklyBuildsChart from "../../components/Dashboard/WeeklyBuildsChart";
+import PipelineFailurePredictionChart from "../../components/Dashboard/PipelineFailurePredictionChart";
 
 const { Option } = Select;
 
@@ -15,15 +17,35 @@ function Dashboard() {
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [workflows, setWorkflows] = useState([]);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState(null);
-  const [workflowDetails, setWorkflowDetails] = useState(null);
   const [pipelineStats, setPipelineStats] = useState({
     success_rate: 0,
     failed_builds: 0,
     average_run_time: 0,
+    success_rate_change: 0,
+    failed_builds_change: 0,
+    last_failure: null,
+    recent_failures: 0,
   });
   const [loading, setLoading] = useState(false);
 
-  // Lấy danh sách repos khi component mount
+  const themeStyles = {
+    light: {
+      background: '#ffffff',
+      borderColor: '#e4e7ec',
+      textColor: '#000',
+      optionHoverBg: '#f2f4f7',
+    },
+    dark: {
+      background: '#1a2231',
+      borderColor: '#1d2939',
+      textColor: '#d9d9d9',
+      optionHoverBg: '#1d2939',
+    },
+  };
+
+  const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  const theme = themeStyles[currentTheme];
+
   useEffect(() => {
     const fetchRepos = async () => {
       setLoading(true);
@@ -55,7 +77,6 @@ function Dashboard() {
     }
   }, [user?.id]);
 
-  // Lấy danh sách nhánh khi chọn repository
   useEffect(() => {
     const fetchBranches = async () => {
       if (!selectedRepoId) {
@@ -63,8 +84,7 @@ function Dashboard() {
         setSelectedBranch(null);
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setWorkflowDetails(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0 });
+        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
         return;
       }
 
@@ -89,8 +109,7 @@ function Dashboard() {
         setSelectedBranch(null);
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setWorkflowDetails(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0 });
+        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
       } finally {
         setLoading(false);
       }
@@ -99,14 +118,12 @@ function Dashboard() {
     fetchBranches();
   }, [user?.id, selectedRepoId]);
 
-  // Lấy danh sách workflows khi chọn nhánh
   useEffect(() => {
     const fetchWorkflows = async () => {
       if (!selectedRepoId || !selectedBranch) {
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setWorkflowDetails(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0 });
+        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
         return;
       }
 
@@ -129,8 +146,7 @@ function Dashboard() {
         message.error(error.message);
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setWorkflowDetails(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0 });
+        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
       } finally {
         setLoading(false);
       }
@@ -139,31 +155,15 @@ function Dashboard() {
     fetchWorkflows();
   }, [user?.id, selectedRepoId, selectedBranch]);
 
-  // Lấy thông tin chi tiết workflow và số liệu thống kê khi chọn workflow
   useEffect(() => {
-    const fetchWorkflowDetailsAndStats = async () => {
+    const fetchPipelineStats = async () => {
       if (!selectedWorkflowId) {
-        setWorkflowDetails(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0 });
+        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
         return;
       }
 
       setLoading(true);
       try {
-        // Lấy thông tin chi tiết workflow
-        console.log(`Fetching workflow details for workflow_id: ${selectedWorkflowId}`);
-        const workflowDetailsResponse = await fetch(
-          `http://localhost:5000/api/workflow-details/${selectedWorkflowId}`
-        );
-        if (!workflowDetailsResponse.ok) {
-          const errorData = await workflowDetailsResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch workflow details');
-        }
-        const workflowDetailsData = await workflowDetailsResponse.json();
-        console.log('Workflow details fetched:', workflowDetailsData);
-        setWorkflowDetails(workflowDetailsData);
-
-        // Lấy số liệu thống kê
         console.log(`Fetching pipeline stats for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}, workflow_id: ${selectedWorkflowId}`);
         const statsResponse = await fetch(
           `http://localhost:5000/api/pipeline-stats?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}&workflow_id=${selectedWorkflowId}`
@@ -176,31 +176,54 @@ function Dashboard() {
         console.log('Pipeline stats fetched:', statsData);
         setPipelineStats(statsData);
       } catch (error) {
-        console.error('Error in fetchWorkflowDetailsAndStats:', error);
+        console.error('Error in fetchPipelineStats:', error);
         message.error(error.message);
-        setWorkflowDetails(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0 });
+        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchWorkflowDetailsAndStats();
+    fetchPipelineStats();
   }, [user?.id, selectedRepoId, selectedBranch, selectedWorkflowId]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <PageHeader
+    <>
+      <style>
+        {`
+          .ant-select-dropdown {
+            background-color: ${theme.background} !important;
+            border-color: ${theme.borderColor} !important;
+            color: ${theme.textColor} !important;
+          }
+          .ant-select-item-option {
+            color: ${theme.textColor} !important;
+          }
+          .ant-select-item-option:hover {
+            background-color: ${theme.optionHoverBg} !important;
+          }
+          .ant-select-item-option-selected {
+            background-color: ${theme.optionHoverBg} !important;
+            font-weight: bold;
+          }
+        `}
+      </style>
+      <PageMeta
         title="Dashboard"
         description="Overview of your CI/CD pipelines by repository, branch, and workflow"
       />
-      <div className="mb-6">
-        {/* Thêm tiêu đề và đổ bóng cho dropdowns */}
-        <div className="flex gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Repository</label>
+      <PageBreadcrumb
+        pageTitle="Dashboard"
+        description="Overview of your CI/CD pipelines by repository, branch, and workflow"
+      />
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:gap-3">
+          <div className="flex-1 min-w-0">
+            <label className="block text-sm mb-1 font-semibold text-gray-800 dark:text-gray-200">
+              Repository
+            </label>
             <Select
-              style={{ width: 500 }}
+              className="w-full"
               placeholder="Select a repository"
               onChange={(value) => {
                 console.log('Selected repo_id:', value);
@@ -208,6 +231,11 @@ function Dashboard() {
               }}
               value={selectedRepoId}
               allowClear
+              dropdownStyle={{
+                backgroundColor: theme.background,
+                borderColor: theme.borderColor,
+                color: theme.textColor,
+              }}
             >
               {repos.length > 0 ? (
                 repos.map((repo) => (
@@ -222,10 +250,12 @@ function Dashboard() {
               )}
             </Select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+          <div className="w-full sm:w-48">
+            <label className="block text-sm mb-1 font-semibold text-gray-800 dark:text-gray-200">
+              Branch
+            </label>
             <Select
-              style={{ width: 200 }}
+              className="w-full"
               placeholder="Select a branch"
               onChange={(value) => {
                 console.log('Selected branch:', value);
@@ -234,6 +264,11 @@ function Dashboard() {
               value={selectedBranch}
               disabled={!selectedRepoId || branches.length === 0}
               allowClear
+              dropdownStyle={{
+                backgroundColor: theme.background,
+                borderColor: theme.borderColor,
+                color: theme.textColor,
+              }}
             >
               {branches.length > 0 ? (
                 branches.map((branch) => (
@@ -248,10 +283,12 @@ function Dashboard() {
               )}
             </Select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Workflow</label>
+          <div className="w-full sm:w-48">
+            <label className="block text-sm mb-1 font-semibold text-gray-800 dark:text-gray-200">
+              Workflow
+            </label>
             <Select
-              style={{ width: 200 }}
+              className="w-full"
               placeholder="Select a workflow"
               onChange={(value) => {
                 console.log('Selected workflow_id:', value);
@@ -260,6 +297,11 @@ function Dashboard() {
               value={selectedWorkflowId}
               disabled={!selectedRepoId || !selectedBranch || workflows.length === 0}
               allowClear
+              dropdownStyle={{
+                backgroundColor: theme.background,
+                borderColor: theme.borderColor,
+                color: theme.textColor,
+              }}
             >
               {workflows.length > 0 ? (
                 workflows.map((workflow) => (
@@ -278,42 +320,34 @@ function Dashboard() {
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <p className="text-gray-800 dark:text-gray-200">Loading...</p>
       ) : selectedRepoId && selectedBranch && selectedWorkflowId ? (
         <>
-          <PipelineStatsCards stats={pipelineStats} />
-
-          {/* Card hiển thị thông tin chi tiết workflow */}
-          {workflowDetails && (
-            <Card title="Workflow Details" className="mb-6 shadow-md">
-              <p><strong>Name:</strong> {workflowDetails.name}</p>
-              <p><strong>GitHub Workflow ID:</strong> {workflowDetails.github_workflow_id}</p>
-              <p><strong>Path:</strong> {workflowDetails.path}</p>
-              <p><strong>State:</strong> {workflowDetails.state}</p>
-              <p><strong>Created At:</strong> {new Date(workflowDetails.created_at).toLocaleString()}</p>
-              <p><strong>Updated At:</strong> {new Date(workflowDetails.updated_at).toLocaleString()}</p>
-              <p>
-                <strong>URL:</strong>{' '}
-                <a href={workflowDetails.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                  {workflowDetails.html_url}
-                </a>
-              </p>
-            </Card>
-          )}
-
-          {/* Biểu đồ pipeline */}
-          <div className="mt-6">
-            <PipelineChart
-              selectedRepoId={selectedRepoId}
-              selectedBranch={selectedBranch}
-              selectedWorkflowId={selectedWorkflowId}
-            />
+          <div className="grid grid-cols-12 gap-4 md:gap-6 mb-6">
+            <div className="col-span-12">
+              <CardMetrics pipelineStats={pipelineStats} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
+            <div className="col-span-1">
+              <PipelineFailurePredictionChart pipelineStats={pipelineStats} />
+            </div>
+            <div className="col-span-1 md:col-span-2">
+              <WeeklyBuildsChart 
+                userId={user?.id}
+                repoId={selectedRepoId}
+                branch={selectedBranch}
+                workflowId={selectedWorkflowId}
+              />
+            </div>
           </div>
         </>
       ) : (
-        <p>Please select a repository, branch, and workflow to view pipeline data.</p>
+        <p className="text-gray-800 dark:text-gray-200">
+          Please select a repository, branch, and workflow to view pipeline data.
+        </p>
       )}
-    </div>
+    </>
   );
 }
 

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import axiosInstance from '../api/axiosConfig';
 
 const UserContext = createContext({
-  user: { id: '', name: '', role: '', auth: false },
+  user: { id: '', name: '', email: '', role: '', auth: false },
   login: () => {},
   logout: () => {},
   register: () => {},
@@ -15,7 +15,7 @@ const UserProvider = ({ children }) => {
   const [user, setUser] = useState(
     sessionStorage.getItem('user')
       ? JSON.parse(sessionStorage.getItem('user'))
-      : { id: '', name: '', role: '', auth: false }
+      : { id: '', name: '', email: '', role: '', auth: false }
   );
 
   useEffect(() => {
@@ -31,6 +31,7 @@ const UserProvider = ({ children }) => {
     const newUser = {
         id: userData.id,
         name: userData.name,
+        email: userData.email,
         role: userData.role[0], // Assuming role is an array and we want the first element
         auth: true,
     };

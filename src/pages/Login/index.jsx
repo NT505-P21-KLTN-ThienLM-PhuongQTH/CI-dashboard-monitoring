@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { UserContext } from '../../contexts/UserContext';
-import Form from '../../components/Form';
+import Form from '../../components/TextForm';
+import FullLayout from '../../layouts/FullLayout';
 
 const LoginPage = () => {
   const { user } = useContext(UserContext);
@@ -14,21 +15,23 @@ const LoginPage = () => {
   };
 
   return (
-    <div className='flex w-full h-screen'>
-      <div className="w-full flex items-center justify-center lg:w-1/2">
-        <Form
-          formType="login"
-          heading={'Login to your account'}
-          subHeading={'Welcome back! Please enter you details.'}
-          handleResponse={handleSubmit}
+    <FullLayout>
+      <div className='flex w-full h-screen'>
+        <div className="w-full flex items-center justify-center lg:w-1/2">
+          <Form
+            formType="login"
+            heading={'Login to your account'}
+            subHeading={'Welcome back! Please enter you details.'}
+            handleResponse={handleSubmit}
+          />
+        </div>
+        <img
+          src="/assets/images/devops.svg"
+          alt="login"
+          className="hidden lg:block w-1/2 h-screen object-cover object-center"
         />
       </div>
-      <img
-        src="/assets/images/devops.svg"
-        alt="login"
-        className="hidden lg:block w-1/2 h-screen object-cover object-center"
-      />
-    </div>
+    </FullLayout>
   );
 }
 
