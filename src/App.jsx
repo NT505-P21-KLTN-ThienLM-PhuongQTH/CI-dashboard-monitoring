@@ -9,7 +9,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Repository from "./pages/Repository";
-import UserProfile from "./pages/UserProfile";
+import AccountSettings from "./pages/AccountSettings";
+import NotFound from "./pages/OtherPage/NotFound";
 
 import TestPage from "./pages/TestPage";
 
@@ -33,9 +34,10 @@ function App() {
           <Route element={<DefaultLayout />}>
             <Route index path="/" element={<Dashboard />} />
             <Route path="/workflows" element={<TestPage />} />
-            <Route path="/prediction-metrics" element={<TestPage />} />
+            <Route path="/prediction-metrics" element={<NotFound />} />
             <Route path="/repositories" element={<Repository />} />
-            <Route path="/profile" element={<UserProfile />} />
+            <Route path="/settings" element={<AccountSettings />} />
+            <Route path="*" element={<NotFound />} /> 
           </Route>
         </Routes>
       </BrowserRouter>

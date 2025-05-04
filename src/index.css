@@ -489,3 +489,183 @@
     @apply border-[6px] border-brand-500 bg-brand-500 dark:border-brand-500;
   }
 }
+
+/* Ant Design Table */
+.ant-table {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 0.5rem !important;
+  border: none !important; /* Loại bỏ viền trắng mặc định của bảng */
+}
+.dark .ant-table {
+  background: #1a2231 !important;
+  color: #d9d9d9 !important;
+  border: none !important;
+}
+.ant-table-wrapper,
+.ant-table-container {
+  border: none !important;
+}
+.dark .ant-table-wrapper,
+.dark .ant-table-container {
+  border: none !important;
+}
+
+/* Header */
+.ant-table-thead > tr > th {
+  background: #f2f4f7 !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+  border-color: #e4e7ec !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+.dark .ant-table-thead > tr > th {
+  background: #1d2939 !important;
+  color: #d9d9d9 !important;
+  border-color: #1d2939 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+/* Body */
+.ant-table-tbody > tr > td {
+  border-color: #e4e7ec !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  color: #000000 !important;
+}
+.dark .ant-table-tbody > tr > td {
+  border-color: #1d2939 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  color: #d9d9d9 !important;
+}
+
+/* Hover */
+.ant-table-tbody > tr:hover > td {
+  background: #f2f4f7 !important;
+}
+.dark .ant-table-tbody > tr:hover > td {
+  background: #1d2939 !important;
+}
+
+/* Links */
+.ant-table-tbody > tr > td a {
+  color: #2563eb !important;
+}
+.dark .ant-table-tbody > tr > td a {
+  color: #3b82f6 !important;
+}
+.ant-table-tbody > tr > td a:hover {
+  text-decoration: underline !important;
+}
+
+.ant-empty-description {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+
+/* Ant Design Button */
+.ant-btn {
+  @apply bg-[#ffffff] dark:bg-[#1a2231] text-[#000] dark:text-[#d9d9d9] border-[#e4e7ec] dark:border-[#1d2939];
+}
+.ant-btn-primary {
+  @apply bg-[#2563eb] dark:bg-[#3b82f6] text-white border-none;
+}
+.ant-btn-text {
+  @apply text-[#2563eb] dark:text-[#3b82f6];
+}
+.ant-btn:hover,
+.ant-btn:focus {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939] text-[#000] dark:text-[#d9d9d9];
+}
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  @apply bg-[#1d4ed8] dark:bg-[#60a5fa] text-white;
+}
+.ant-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+.ant-btn-icon .anticon-search {
+  @apply text-[#000] dark:text-[#d9d9d9];
+}
+
+/* Ant Design Select */
+.ant-select-selector {
+  @apply bg-[#ffffff] dark:bg-[#1a2231] text-[#000] dark:text-[#000] border-[#e4e7ec] dark:border-[#1d2939];
+}
+.ant-select-selector:hover,
+.ant-select-selector:focus {
+  @apply border-[#2563eb] dark:border-[#3b82f6];
+}
+.ant-select-dropdown {
+  @apply bg-[#ffffff] dark:bg-[#1a2231] text-[#000] dark:text-[#d9d9d9] border-[#e4e7ec] dark:border-[#1d2939];
+}
+.ant-select-item-option {
+  @apply text-[#000] dark:text-[#d9d9d9];
+}
+.ant-select-item-option:hover {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939];
+}
+.ant-select-item-option-selected {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939] font-semibold;
+}
+.ant-select-show-arrow .ant-select-arrow {
+  @apply text-[#000] dark:text-[#d9d9d9];
+}
+.ant-select-single .ant-select-selector {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939] text-[#000] dark:text-[#d9d9d9] border-[#e4e7ec] dark:border-[#1d2939];
+}
+.ant-select-selection-item {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-select-selection-placeholder {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+
+/* Ant Design Spin */
+.ant-spin-dot-item {
+  @apply bg-[#2563eb] dark:bg-[#3b82f6];
+}
+
+/* Ant Design Modal */
+.ant-modal-content {
+  @apply bg-white dark:bg-gray-900 text-black dark:text-[#d9d9d9] border-none rounded-lg !important;
+}
+.ant-modal-header {
+  @apply bg-white dark:bg-gray-900 border-gray-200 dark:border-[#1d2939] border-b !important;
+}
+.ant-modal-title {
+  @apply text-black dark:text-[#d9d9d9] !important;
+}
+.ant-modal-footer {
+  @apply border-gray-200 dark:border-[#1d2939] border-t !important;
+}
+.ant-form-item-required {
+  @apply text-gray-700 dark:text-[#d9d9d9] !important;
+}
+.ant-input {
+  @apply text-gray-700 dark:text-[#d9d9d9] bg-white dark:bg-black border-gray-200 dark:border-[#1d2939] dark:placeholder:text-gray-700 !important;
+}
+.ant-input-affix-wrapper {
+  @apply text-gray-700 dark:text-[#d9d9d9] bg-white dark:bg-black border-gray-200 dark:border-[#1d2939] dark:placeholder:text-gray-700 !important;
+}
+.ant-input-password-icon.anticon-eye-invisible {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-input-password-icon.anticon-eye {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-modal-close-icon {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-modal-confirm-title {
+  @apply text-black dark:text-[#d9d9d9] !important;
+}
+.ant-modal-confirm-content {
+  @apply text-gray-700 dark:text-[#d9d9d9] !important;
+}
+
+.ant-message {
+  @apply z-99999 !important;
+}

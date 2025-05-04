@@ -168,12 +168,10 @@ export default function PipelineFailurePredictionChart({ pipelineStats }) {
 
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Last Failure
+            Total Builds
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            {pipelineStats?.last_failure !== null
-              ? `${pipelineStats.last_failure} days ago`
-              : "N/A"}
+            {pipelineStats?.total_pipelines || 0}
           </p>
         </div>
 
@@ -181,10 +179,12 @@ export default function PipelineFailurePredictionChart({ pipelineStats }) {
 
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Total Builds
+            Last Failure
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            {pipelineStats?.total_pipelines || 0}
+            {pipelineStats?.last_failure !== null
+              ? `${pipelineStats.last_failure} days ago`
+              : "N/A"}
           </p>
         </div>
       </div>
