@@ -91,6 +91,7 @@ export default function StatisticsChart() {
           show: true,
         },
       },
+      borderColor: "rgba(173, 181, 189, 0.4)",
     },
     dataLabels: {
       enabled: false,

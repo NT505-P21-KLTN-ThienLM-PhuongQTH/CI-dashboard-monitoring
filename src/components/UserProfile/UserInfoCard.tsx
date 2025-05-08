@@ -25,19 +25,22 @@ export default function UserInfoCard({ userData }) {
       if (formData.email !== user?.email) {
         throw new Error("Email must match your login email");
       }
-
-      const response = await fetch(`${import.meta.env.VITE_APP_API_URL}userdata/${userData.user_id}`, {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/userdata/${userData.user_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(formData),
       });
       if (!response.ok) throw new Error("Failed to update user data");
 
       // Cập nhật bảng users nếu cần (tùy thuộc backend)
       if (formData.email && formData.email !== user?.email) {
-        await fetch(`${import.meta.env.VITE_APP_API_URL}users/${userData.user_id}`, {
+        await fetch(`${import.meta.env.VITE_APP_API_URL}/users/${userData.user_id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ email: formData.email }),
         });
       }

@@ -28,8 +28,10 @@ const RepositoryTable = () => {
   const [repos, setRepos] = useState([]);
   const [filteredRepos, setFilteredRepos] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [editingRepo, setEditingRepo] = useState(null);
+  const [selectedRepoData, setSelectedRepoData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchText, setSearchText] = useState('');
@@ -37,10 +39,17 @@ const RepositoryTable = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { width } = useWindowSize();
 
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
   const fetchRepos = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/repos?user_id=${user.id}`);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/repos?user_id=${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch repositories');
       }
@@ -64,6 +73,27 @@ const RepositoryTable = () => {
   useEffect(() => {
     fetchRepos();
   }, [user.id]);
+
+  // Hàm lấy thông tin chi tiết RepoData
+  const fetchRepoData = async (repoId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/repodata/${repoId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch repository details');
+      }
+      const data = await response.json();
+      setSelectedRepoData(data);
+      setIsDetailModalOpen(true);
+    } catch (error) {
+      message.error(error.message);
+    }
+  };
 
   const applyFiltersAndSort = (data, search, status) => {
     let filteredData = [...data];
@@ -109,7 +139,9 @@ const RepositoryTable = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    setIsDetailModalOpen(false); // Đóng cả modal chi tiết
     setEditingRepo(null);
+    setSelectedRepoData(null); // Xóa dữ liệu chi tiết
     form.resetFields();
   };
 
@@ -141,11 +173,13 @@ const RepositoryTable = () => {
       form.resetFields();
       setEditingRepo(null);
 
+      const token = localStorage.getItem("token");
       if (editingRepo) {
-        const response = await fetch(`http://localhost:5000/api/repos/${editingRepo.id}`, {
+        const response = await fetch(`${API_URL}/repos/${editingRepo.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             url: values.url,
@@ -166,10 +200,11 @@ const RepositoryTable = () => {
         applyFiltersAndSort(updatedRepos, searchText, statusFilter);
         message.success('Repository updated successfully!');
       } else {
-        const response = await fetch('http://localhost:5000/api/repos', {
+        const response = await fetch(`${API_URL}/repos`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
             user_id: user.id,
@@ -200,10 +235,12 @@ const RepositoryTable = () => {
   const handleRetry = async (repo) => {
     try {
       setProcessing(true);
-      const response = await fetch(`http://localhost:5000/api/repos/${repo.id}`, {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/repos/${repo.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           url: repo.html_url,
@@ -214,247 +251,372 @@ const RepositoryTable = () => {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to retry repository');
-        }
-
-        const updatedRepo = await response.json();
-        const updatedRepos = repos.map((r) => (r.id === repo.id ? updatedRepo : r));
-        setRepos(updatedRepos);
-        applyFiltersAndSort(updatedRepos, searchText, statusFilter);
-        message.success('Repository retried successfully!');
-      } catch (error) {
-        message.error(error.message);
-      } finally {
-        setProcessing(false);
       }
-    };
 
-    const handleDelete = (id) => {
-      Modal.confirm({
-        title: 'Are you sure you want to delete this repository?',
-        onOk: async () => {
-          try {
-            const response = await fetch(`http://localhost:5000/api/repos/${id}`, {
-              method: 'DELETE',
-            });
+      const updatedRepo = await response.json();
+      const updatedRepos = repos.map((r) => (r.id === repo.id ? updatedRepo : r));
+      setRepos(updatedRepos);
+      applyFiltersAndSort(updatedRepos, searchText, statusFilter);
+      message.success('Repository retried successfully!');
+    } catch (error) {
+      message.error(error.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
 
-            if (!response.ok) {
-              throw new Error('Failed to delete repository');
-            }
+  const handleDelete = (id) => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this repository?',
+      onOk: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const response = await fetch(`${API_URL}/repos/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
 
-            const updatedRepos = repos.filter((repo) => repo.id !== id);
-            setRepos(updatedRepos);
-            applyFiltersAndSort(updatedRepos, searchText, statusFilter);
-            message.success('Repository deleted successfully!');
-          } catch (error) {
-            message.error(error.message);
+          if (!response.ok) {
+            throw new Error('Failed to delete repository');
           }
-        },
-      });
-    };
 
-    const columns = [
-      {
-        title: 'Full Name',
-        dataIndex: 'full_name',
-        key: 'full_name',
-        sorter: (a, b) => a.full_name.localeCompare(b.full_name),
-        ellipsis: true,
-        width: 300,
-        render: (text) => <span className="text-gray-700 text-start text-sm dark:text-gray-300">{text}</span>,
+          const updatedRepos = repos.filter((repo) => repo.id !== id);
+          setRepos(updatedRepos);
+          applyFiltersAndSort(updatedRepos, searchText, statusFilter);
+          message.success('Repository deleted successfully!');
+        } catch (error) {
+          message.error(error.message);
+        }
       },
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        sorter: (a, b) => a.name.localeCompare(b.name),
-        hidden: width < 768,
-        ellipsis: true,
-        width: 200,
-        render: (text) => <span className="text-gray-700 text-start text-sm dark:text-gray-300">{text}</span>,
-      },
-      {
-        title: 'URL',
-        dataIndex: 'html_url',
-        key: 'html_url',
-        render: (text) => (
-          <a href={text} target="_blank" rel="noopener noreferrer" className="text-gray-700 text-start text-sm dark:text-gray-300">
-            {text}
-          </a>
-        ),
-        ellipsis: true,
-        width: 400,
-      },
-      {
-        title: 'Status',
-        dataIndex: 'status',
-        key: 'status',
-        render: (status) => (
-          <div style={{ textAlign: 'center' }}>
-            <Badge
-              size="small" // Sử dụng size="small" thay vì "sm" vì Ant Design không có size "sm"
-              color={
-                status === 'Success'
-                  ? 'success'
-                  : status === 'Pending'
-                  ? 'warning'
-                  : 'error'
-              }
-            >
-              {status}
-            </Badge>
-          </div>
-        ),
-        width: 150,
-      },
-      {
-        title: 'Actions',
-        key: 'actions',
-        render: (_, record) => (
-          <Space size="middle">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => showModal(record)}
-              style={{ color: '#1890ff' }}
-              disabled={record.status === 'Pending' || record.status === 'Failed'}
-            />
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record.id)}
-              style={{ color: '#ff4d4f' }}
-              disabled={record.status === 'Pending'}
-            />
-            {record.status === 'Failed' && (
-              <Button
-                type="text"
-                icon={<RedoOutlined />}
-                onClick={() => handleRetry(record)}
-                style={{ color: '#FAAD14' }}
-              />
-            )}
-          </Space>
-        ),
-        width: 150,
-      },
-    ].filter((col) => !col.hidden);
+    });
+  };
 
-    return (
-      <div>
-        <div style={{ marginBottom: 16 }}>
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Input.Search
-                placeholder="Search by name, full name, or URL..."
-                value={searchText}
-                onChange={(e) => handleSearch(e.target.value)}
-                allowClear
-                style={{ width: '100%' }}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={4}>
-              <Select
-                style={{ width: '100%' }}
-                value={statusFilter}
-                onChange={handleStatusFilter}
-                options={[
-                  { value: 'all', label: 'All Statuses' },
-                  { value: 'Success', label: 'Success' },
-                  { value: 'Failed', label: 'Failed' },
-                  { value: 'Pending', label: 'Pending' },
-                ]}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={8} lg={6}>
-              <Space wrap size="middle">
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  onClick={() => showModal()}
-                  disabled={processing || isSubmitting}
-                  style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
-                >
-                  Add Repository
-                </Button>
-                <Button
-                  icon={<ReloadOutlined />}
-                  onClick={fetchRepos}
-                  loading={loading}
-                >
-                  Refresh
-                </Button>
-              </Space>
-            </Col>
-            <Col xs={24} md={24} lg={8} style={{ textAlign: 'right' }}>
-              {processing && (
-                <Spin tip="Processing repository... Please wait or refresh to see the status." />
-              )}
-            </Col>
-          </Row>
-        </div>
-
-        <div className="overflow-x-auto">
-          <Table
-            columns={columns}
-            dataSource={filteredRepos}
-            rowKey="id"
-            bordered
-            loading={loading}
-            scroll={{ x: 1200 }}
+  const columns = [
+    {
+      title: 'Full Name',
+      dataIndex: 'full_name',
+      key: 'full_name',
+      sorter: (a, b) => a.full_name.localeCompare(b.full_name),
+      ellipsis: true,
+      width: 300,
+      render: (text) => <span className="text-gray-700 text-start text-sm dark:text-gray-300">{text}</span>,
+    },
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      sorter: (a, b) => a.name.localeCompare(b.name),
+      hidden: width < 768,
+      ellipsis: true,
+      width: 200,
+      render: (text) => <span className="text-gray-700 text-start text-sm dark:text-gray-300">{text}</span>,
+    },
+    {
+      title: 'URL',
+      dataIndex: 'html_url',
+      key: 'html_url',
+      render: (text) => (
+        <a href={text} target="_blank" rel="noopener noreferrer" className="text-gray-700 text-start text-sm dark:text-gray-300">
+          {text}
+        </a>
+      ),
+      ellipsis: true,
+      width: 400,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <div style={{ textAlign: 'center' }}>
+          <Badge
             size="small"
-            components={{
-              header: {
-                row: ({ children }) => <tr>{children}</tr>,
-                cell: ({ children }) => (
-                  <th className="border-b text-start text-sm">
-                    {children}
-                  </th>
-                ),
-              },
-              body: {
-                row: ({ children }) => <tr>{children}</tr>,
-                cell: ({ children }) => (
-                  <td className="text-start text-sm">
-                    {children}
-                  </td>
-                ),
-              },
-            }}
-            style={{
-              minWidth: '100%',
-            }}
-          />
+            color={
+              status === 'Success'
+                ? 'success'
+                : status === 'Pending'
+                ? 'warning'
+                : 'error'
+            }
+          >
+            {status}
+          </Badge>
         </div>
+      ),
+      width: 150,
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Space size="middle">
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => showModal(record)}
+            style={{ color: '#1890ff' }}
+            disabled={record.status === 'Pending' || record.status === 'Failed'}
+          />
+          <Button
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record.id)}
+            style={{ color: '#ff4d4f' }}
+            disabled={record.status === 'Pending'}
+          />
+          {record.status === 'Failed' && (
+            <Button
+              type="text"
+              icon={<RedoOutlined />}
+              onClick={() => handleRetry(record)}
+              style={{ color: '#FAAD14' }}
+            />
+          )}
+          <Button
+            type="text"
+            onClick={() => fetchRepoData(record.id)} // Gọi API để lấy chi tiết
+            style={{ color: '#1890ff' }}
+          >
+            View
+          </Button>
+        </Space>
+      ),
+      width: 200,
+    },
+  ].filter((col) => !col.hidden);
 
-        <Modal
-          title={editingRepo ? 'Edit Repository' : 'Add Repository'}
-          open={isModalVisible}
-          onOk={handleSubmit}
-          onCancel={handleCancel}
-          okText={editingRepo ? 'Update' : 'Add'}
-          cancelText="Cancel"
-          okButtonProps={{ style: { backgroundColor: '#1890ff', borderColor: '#1890ff' }, disabled: isSubmitting }}
-          width={Math.min(window.innerWidth * 0.9, 520)}
-        >
-          <Form form={form} layout="vertical">
-            <Form.Item
-              name="url"
-              label="URL"
-              rules={[{ required: true, message: 'Please enter the repository URL!' }]}
-            >
-              <Input placeholder="https://github.com/user/repo" style={{ width: '100%' }} />
-            </Form.Item>
-            <Form.Item
-              name="token"
-              label="Token PAT"
-              rules={[{ required: true, message: 'Please enter the Token PAT!' }]}
-            >
-              <Input.Password placeholder="github_pat_xxxxxxxxxxxxxxxx" style={{ width: '100%' }} />
-            </Form.Item>
-          </Form>
-        </Modal>
+  return (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Input.Search
+              placeholder="Search by name, full name, or URL..."
+              value={searchText}
+              onChange={(e) => handleSearch(e.target.value)}
+              allowClear
+              style={{ width: '100%' }}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={4}>
+            <Select
+              style={{ width: '100%' }}
+              value={statusFilter}
+              onChange={handleStatusFilter}
+              options={[
+                { value: 'all', label: 'All Statuses' },
+                { value: 'Success', label: 'Success' },
+                { value: 'Failed', label: 'Failed' },
+                { value: 'Pending', label: 'Pending' },
+              ]}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Space wrap size="middle">
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => showModal()}
+                disabled={processing || isSubmitting}
+                style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+              >
+                Add Repository
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={fetchRepos}
+                loading={loading}
+              >
+                Refresh
+              </Button>
+            </Space>
+          </Col>
+          <Col xs={24} md={24} lg={8} style={{ textAlign: 'right' }}>
+            {processing && (
+              <Spin tip="Processing repository... Please wait or refresh to see the status." />
+            )}
+          </Col>
+        </Row>
       </div>
-    );
+
+      <div className="overflow-x-auto">
+        <Table
+          columns={columns}
+          dataSource={filteredRepos}
+          rowKey="id"
+          bordered
+          loading={loading}
+          scroll={{ x: 1200 }}
+          size="small"
+          components={{
+            header: {
+              row: ({ children }) => <tr>{children}</tr>,
+              cell: ({ children }) => (
+                <th className="border-b text-start text-sm">
+                  {children}
+                </th>
+              ),
+            },
+            body: {
+              row: ({ children }) => <tr>{children}</tr>,
+              cell: ({ children }) => (
+                <td className="text-start text-sm">
+                  {children}
+                </td>
+              ),
+            },
+          }}
+          style={{
+            minWidth: '100%',
+          }}
+        />
+      </div>
+
+      <Modal
+        title={editingRepo ? 'Edit Repository' : 'Add Repository'}
+        open={isModalVisible}
+        onOk={handleSubmit}
+        onCancel={handleCancel}
+        okText={editingRepo ? 'Update' : 'Add'}
+        cancelText="Cancel"
+        okButtonProps={{ style: { backgroundColor: '#1890ff', borderColor: '#1890ff' }, disabled: isSubmitting }}
+        width={Math.min(window.innerWidth * 0.9, 520)}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="url"
+            label="URL"
+            rules={[{ required: true, message: 'Please enter the repository URL!' }]}
+          >
+            <Input placeholder="https://github.com/user/repo" style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item
+            name="token"
+            label="Token PAT"
+            rules={[{ required: true, message: 'Please enter the Token PAT!' }]}
+          >
+            <Input.Password placeholder="github_pat_xxxxxxxxxxxxxxxx" style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal xem chi tiết RepoData */}
+      <Modal
+        title="Repository Details"
+        open={isDetailModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+        width={Math.min(window.innerWidth * 0.9, 520)}
+      >
+        {selectedRepoData && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-2">
+              <p>
+                <strong>Repo ID:</strong> {selectedRepoData.repo_id?.toString() || "-"}
+              </p>
+              <p>
+                <strong>GitHub Repo ID:</strong> {selectedRepoData.github_repo_id || "-"}
+              </p>
+              <p>
+                <strong>Full Name:</strong> {selectedRepoData.full_name || "-"}
+              </p>
+              <p>
+                <strong>Name:</strong> {selectedRepoData.name || "-"}
+              </p>
+              <p>
+                <strong>URL:</strong>{" "}
+                {selectedRepoData.html_url ? (
+                  <a href={selectedRepoData.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                    {selectedRepoData.html_url}
+                  </a>
+                ) : "-"}
+              </p>
+              <div>
+                <strong>Owner:</strong>
+                {selectedRepoData.owner ? (
+                  <div className="ml-4">
+                    <p>
+                      <strong>ID:</strong> {selectedRepoData.owner.id || "-"}
+                    </p>
+                    <p>
+                      <strong>Login:</strong> {selectedRepoData.owner.login || "-"}
+                    </p>
+                    <p>
+                      <strong>Avatar URL:</strong>{" "}
+                      {selectedRepoData.owner.avatar_url ? (
+                        <a href={selectedRepoData.owner.avatar_url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                          View Avatar
+                        </a>
+                      ) : "-"}
+                    </p>
+                  </div>
+                ) : " -"}
+              </div>
+              <p>
+                <strong>Private:</strong> {selectedRepoData.private ? "Yes" : "No"}
+              </p>
+              <p>
+                <strong>Homepage:</strong>{" "}
+                {selectedRepoData.homepage ? (
+                  <a href={selectedRepoData.homepage} target="_blank" rel="noopener noreferrer" className="text-blue-500">
+                    {selectedRepoData.homepage}
+                  </a>
+                ) : "-"}
+              </p>
+              <p>
+                <strong>Pushed At:</strong>{" "}
+                {selectedRepoData.pushed_at ? new Date(selectedRepoData.pushed_at).toLocaleString() : "-"}
+              </p>
+              <p>
+                <strong>Default Branch:</strong> {selectedRepoData.default_branch || "-"}
+              </p>
+              <p>
+                <strong>Language:</strong> {selectedRepoData.language || "-"}
+              </p>
+              <p>
+                <strong>Stargazers Count:</strong> {selectedRepoData.stargazers_count ?? "-"}
+              </p>
+              <p>
+                <strong>Forks Count:</strong> {selectedRepoData.forks_count ?? "-"}
+              </p>
+              <p>
+                <strong>Watchers Count:</strong> {selectedRepoData.watchers_count ?? "-"}
+              </p>
+              <p>
+                <strong>Open Issues Count:</strong> {selectedRepoData.open_issues_count ?? "-"}
+              </p>
+              <div>
+                <strong>Permissions:</strong>
+                {selectedRepoData.permissions ? (
+                  <div className="ml-4">
+                    <p>
+                      <strong>Admin:</strong> {selectedRepoData.permissions.admin ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      <strong>Push:</strong> {selectedRepoData.permissions.push ? "Yes" : "No"}
+                    </p>
+                    <p>
+                      <strong>Pull:</strong> {selectedRepoData.permissions.pull ? "Yes" : "No"}
+                    </p>
+                  </div>
+                ) : " -"}
+              </div>
+              <p>
+                <strong>Created At:</strong>{" "}
+                {selectedRepoData.createdAt ? new Date(selectedRepoData.createdAt).toLocaleString() : "-"}
+              </p>
+              <p>
+                <strong>Updated At:</strong>{" "}
+                {selectedRepoData.updatedAt ? new Date(selectedRepoData.updatedAt).toLocaleString() : "-"}
+              </p>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
 };
 
 export default RepositoryTable;

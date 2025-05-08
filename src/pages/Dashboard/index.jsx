@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Select, message } from "antd";
+import axios from "axios";
 import { UserContext } from "../../contexts/UserContext";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
@@ -7,6 +8,8 @@ import CardMetrics from "../../components/Dashboard/CardMetrics";
 import WeeklyBuildsChart from "../../components/Dashboard/WeeklyBuildsChart";
 import PipelineFailurePredictionChart from "../../components/Dashboard/PipelineFailurePredictionChart";
 import StatisticsChart from "../../components/Dashboard/StatisticsChart";
+import WorkflowCard from "../../components/Dashboard/WorkflowCard";
+import WorkflowRunsTable from "../../components/Dashboard/WorkflowRunsTable";
 
 const { Option } = Select;
 
@@ -29,25 +32,28 @@ function Dashboard() {
   });
   const [loading, setLoading] = useState(false);
 
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
   useEffect(() => {
     const fetchRepos = async () => {
       setLoading(true);
       try {
         console.log(`Fetching repositories for user_id: ${user.id}`);
-        const reposResponse = await fetch(`http://localhost:5000/api/repos?user_id=${user.id}`);
-        if (!reposResponse.ok) {
-          const errorData = await reposResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch repositories');
-        }
-        const reposData = await reposResponse.json();
-        console.log('Repositories fetched:', reposData);
+        const token = localStorage.getItem("token");
+        const reposResponse = await axios.get(`${API_URL}/repos?user_id=${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const reposData = reposResponse.data;
+        console.log("Repositories fetched:", reposData);
         setRepos(reposData);
         if (reposData.length > 0) {
           setSelectedRepoId(reposData[0].id);
         }
       } catch (error) {
-        console.error('Error in fetchRepos:', error);
-        message.error(error.message);
+        console.error("Error in fetchRepos:", error);
+        message.error(error.response?.data?.error || error.message);
       } finally {
         setLoading(false);
       }
@@ -56,7 +62,7 @@ function Dashboard() {
     if (user?.id) {
       fetchRepos();
     } else {
-      console.warn('User ID is not available');
+      console.warn("User ID is not available");
     }
   }, [user?.id]);
 
@@ -67,32 +73,52 @@ function Dashboard() {
         setSelectedBranch(null);
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
+        setPipelineStats({
+          success_rate: 0,
+          failed_builds: 0,
+          average_run_time: 0,
+          success_rate_change: 0,
+          failed_builds_change: 0,
+          last_failure: null,
+          recent_failures: 0,
+        });
         return;
       }
 
       setLoading(true);
       try {
-        console.log(`Fetching branches for user_id: ${user.id}, repo_id: ${selectedRepoId}`);
-        const branchesResponse = await fetch(
-          `http://localhost:5000/api/branches?user_id=${user.id}&repo_id=${selectedRepoId}`
+        console.log(
+          `Fetching branches for user_id: ${user.id}, repo_id: ${selectedRepoId}`
         );
-        if (!branchesResponse.ok) {
-          const errorData = await branchesResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch branches');
-        }
-        const branchesData = await branchesResponse.json();
-        console.log('Branches fetched:', branchesData);
+        const token = localStorage.getItem("token");
+        const branchesResponse = await axios.get(
+          `${API_URL}/workflow_run/branches?user_id=${user.id}&repo_id=${selectedRepoId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const branchesData = branchesResponse.data;
+        console.log("Branches fetched:", branchesData);
         setBranches(branchesData);
         setSelectedBranch(branchesData.length > 0 ? branchesData[0] : null);
       } catch (error) {
-        console.error('Error in fetchBranches:', error);
-        message.error(error.message);
+        console.error("Error in fetchBranches:", error);
+        message.error(error.response?.data?.error || error.message);
         setBranches([]);
         setSelectedBranch(null);
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
+        setPipelineStats({
+          success_rate: 0,
+          failed_builds: 0,
+          average_run_time: 0,
+          success_rate_change: 0,
+          failed_builds_change: 0,
+          last_failure: null,
+          recent_failures: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -106,30 +132,50 @@ function Dashboard() {
       if (!selectedRepoId || !selectedBranch) {
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
+        setPipelineStats({
+          success_rate: 0,
+          failed_builds: 0,
+          average_run_time: 0,
+          success_rate_change: 0,
+          failed_builds_change: 0,
+          last_failure: null,
+          recent_failures: 0,
+        });
         return;
       }
 
       setLoading(true);
       try {
-        console.log(`Fetching workflows for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}`);
-        const workflowsResponse = await fetch(
-          `http://localhost:5000/api/workflows?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}`
+        console.log(
+          `Fetching workflows for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}`
         );
-        if (!workflowsResponse.ok) {
-          const errorData = await workflowsResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch workflows');
-        }
-        const workflowsData = await workflowsResponse.json();
-        console.log('Workflows fetched:', workflowsData);
+        const token = localStorage.getItem("token");
+        const workflowsResponse = await axios.get(
+          `${API_URL}/workflow?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const workflowsData = workflowsResponse.data;
+        console.log("Workflows fetched:", workflowsData);
         setWorkflows(workflowsData);
         setSelectedWorkflowId(workflowsData.length > 0 ? workflowsData[0].id : null);
       } catch (error) {
-        console.error('Error in fetchWorkflows:', error);
-        message.error(error.message);
+        console.error("Error in fetchWorkflows:", error);
+        message.error(error.response?.data?.error || error.message);
         setWorkflows([]);
         setSelectedWorkflowId(null);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
+        setPipelineStats({
+          success_rate: 0,
+          failed_builds: 0,
+          average_run_time: 0,
+          success_rate_change: 0,
+          failed_builds_change: 0,
+          last_failure: null,
+          recent_failures: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -141,27 +187,47 @@ function Dashboard() {
   useEffect(() => {
     const fetchPipelineStats = async () => {
       if (!selectedWorkflowId) {
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
+        setPipelineStats({
+          success_rate: 0,
+          failed_builds: 0,
+          average_run_time: 0,
+          success_rate_change: 0,
+          failed_builds_change: 0,
+          last_failure: null,
+          recent_failures: 0,
+        });
         return;
       }
 
       setLoading(true);
       try {
-        console.log(`Fetching pipeline stats for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}, workflow_id: ${selectedWorkflowId}`);
-        const statsResponse = await fetch(
-          `http://localhost:5000/api/pipeline-stats?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}&workflow_id=${selectedWorkflowId}`
+        console.log(
+          `Fetching pipeline stats for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}, workflow_id: ${selectedWorkflowId}`
         );
-        if (!statsResponse.ok) {
-          const errorData = await statsResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch pipeline stats');
-        }
-        const statsData = await statsResponse.json();
-        console.log('Pipeline stats fetched:', statsData);
+        const token = localStorage.getItem("token");
+        const statsResponse = await axios.get(
+          `${API_URL}/workflow_run/pipeline-stats?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}&workflow_id=${selectedWorkflowId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const statsData = statsResponse.data;
+        console.log("Pipeline stats fetched:", statsData);
         setPipelineStats(statsData);
       } catch (error) {
-        console.error('Error in fetchPipelineStats:', error);
-        message.error(error.message);
-        setPipelineStats({ success_rate: 0, failed_builds: 0, average_run_time: 0, success_rate_change: 0, failed_builds_change: 0, last_failure: null, recent_failures: 0 });
+        console.error("Error in fetchPipelineStats:", error);
+        message.error(error.response?.data?.error || error.message);
+        setPipelineStats({
+          success_rate: 0,
+          failed_builds: 0,
+          average_run_time: 0,
+          success_rate_change: 0,
+          failed_builds_change: 0,
+          last_failure: null,
+          recent_failures: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -190,7 +256,7 @@ function Dashboard() {
               className="w-full"
               placeholder="Select a repository"
               onChange={(value) => {
-                console.log('Selected repo_id:', value);
+                console.log("Selected repo_id:", value);
                 setSelectedRepoId(value);
               }}
               value={selectedRepoId}
@@ -217,7 +283,7 @@ function Dashboard() {
               className="w-full"
               placeholder="Select a branch"
               onChange={(value) => {
-                console.log('Selected branch:', value);
+                console.log("Selected branch:", value);
                 setSelectedBranch(value);
               }}
               value={selectedBranch}
@@ -245,7 +311,7 @@ function Dashboard() {
               className="w-full"
               placeholder="Select a workflow"
               onChange={(value) => {
-                console.log('Selected workflow_id:', value);
+                console.log("Selected workflow_id:", value);
                 setSelectedWorkflowId(value);
               }}
               value={selectedWorkflowId}
@@ -282,7 +348,7 @@ function Dashboard() {
               <PipelineFailurePredictionChart pipelineStats={pipelineStats} />
             </div>
             <div className="col-span-1 md:col-span-2">
-              <WeeklyBuildsChart 
+              <WeeklyBuildsChart
                 userId={user?.id}
                 repoId={selectedRepoId}
                 branch={selectedBranch}
@@ -290,8 +356,16 @@ function Dashboard() {
               />
             </div>
           </div>
-          <div className="col-span-12 mb-6">
-            <StatisticsChart />
+          <div className="grid grid-cols-12 col-span-12 gap-4 md:gap-6 mb-6">
+            <div className="col-span-12 xl:col-span-4">
+              <WorkflowCard workflowId={selectedWorkflowId} />
+            </div>
+            <div className="col-span-12 xl:col-span-8">
+              <StatisticsChart />
+            </div>
+          </div>
+          <div className="col-span-12 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6 max-w-full overflow-x-auto">
+            <WorkflowRunsTable workflowId={selectedWorkflowId} selectedBranch={selectedBranch} />
           </div>
         </div>
       ) : (

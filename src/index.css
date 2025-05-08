@@ -510,6 +510,15 @@
 .dark .ant-table-container {
   border: none !important;
 }
+.ant-table-column-sorter {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-table-column-sorter-full {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-table-cell.ant-table-column-sort {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939];
+}
 
 /* Header */
 .ant-table-thead > tr > th {
@@ -589,6 +598,9 @@
 .ant-btn-icon .anticon-search {
   @apply text-[#000] dark:text-[#d9d9d9];
 }
+.anticon-filter {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
 
 /* Ant Design Select */
 .ant-select-selector {
@@ -665,7 +677,50 @@
 .ant-modal-confirm-content {
   @apply text-gray-700 dark:text-[#d9d9d9] !important;
 }
+.ant-form-item-label > label {
+  @apply text-gray-700 dark:text-[#d9d9d9] !important;
+}
 
 .ant-message {
   @apply z-99999 !important;
+}
+
+/* Filter Dropdown */
+.ant-table-filter-dropdown {
+  @apply bg-white dark:bg-[#1a2231] border border-[#e4e7ec] dark:border-[#1d2939] rounded-lg text-black dark:text-[#d9d9d9];
+}
+
+/* Search Input trong Filter Dropdown */
+.ant-table-filter-dropdown .ant-input {
+  @apply bg-white dark:bg-black text-gray-700 dark:text-[#d9d9d9] border border-gray-200 dark:border-[#1d2939] placeholder:text-gray-400 dark:placeholder:text-gray-600;
+}
+
+/* Nút trong Filter Dropdown */
+.ant-table-filter-dropdown .ant-btn {
+  @apply bg-[#ffffff] dark:bg-[#1a2231] text-[#000] dark:text-[#d9d9d9] border-[#e4e7ec] dark:border-[#1d2939];
+}
+.ant-table-filter-dropdown .ant-btn-primary {
+  @apply bg-[#2563eb] dark:bg-[#3b82f6] text-white border-none;
+}
+.ant-table-filter-dropdown .ant-btn:hover,
+.ant-table-filter-dropdown .ant-btn:focus {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939] text-[#000] dark:text-[#d9d9d9];
+}
+
+/* Checkbox trong Filter Dropdown */
+.ant-dropdown-menu {
+  @apply bg-white dark:bg-[#1a2231] text-black dark:text-[#d9d9d9] border border-[#e4e7ec] dark:border-[#1d2939];
+}
+.ant-dropdown-menu-item {
+  @apply text-black dark:text-[#d9d9d9];
+}
+.ant-dropdown-menu-item:hover {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939];
+}
+.ant-dropdown-menu-item-selected {
+  @apply font-semibold bg-[#f2f4f7] dark:bg-[#1d2939];
+}
+
+.dark .ant-dropdown-menu.ant-dropdown-menu-light {
+  @apply bg-[#f2f4f7] dark:bg-[#1d2939];
 }

@@ -71,113 +71,115 @@ function Form({ formType, heading, subHeading, handleResponse }) {
     };
 
     return (
-        <form
+        <div className="flex flex-col flex-1 justify-center w-full max-w-md mx-auto">
+            <form
             className="w-full max-w-md mx-auto p-8 rounded-2xl bg-white shadow-lg border border-gray-100"
             onSubmit={onSubmit}
-        >
-            <h1 className="text-3xl font-bold text-gray-900">{heading}</h1>
-            <p className="text-sm text-gray-500 mt-2">{subHeading}</p>
-            <div className="mt-6 space-y-4">
-                {formType === 'register' && (
-                    <TextField
-                        label="Full Name"
-                        placeholder="Full Name"
-                        name="name"
-                        type="text"
-                        value={values.name}
-                        onChange={(e) => handleChange(e)}
-                        required={true}
-                    />
-                )}
-                <TextField
-                    label="Email"
-                    placeholder="Enter your email"
-                    name="email"
-                    type="email"
-                    value={values.email}
-                    onChange={(e) => handleChange(e)}
-                    required={true}
-                />
-                <TextField
-                    label="Password"
-                    placeholder="Enter your password"
-                    name="password"
-                    type="password"
-                    value={values.password}
-                    onChange={(e) => handleChange(e)}
-                    required={true}
-                />
-                {formType === 'register' && (
-                    <TextField
-                        label="Confirm Password"
-                        placeholder="Confirm Password"
-                        name="confirmPassword"
-                        type="password"
-                        value={values.confirmPassword}
-                        onChange={(e) => handleChange(e)}
-                        required={true}
-                    />
-                )}
-                {formType === 'login' && (
-                    <div className="mt-4 flex justify-between items-center text-sm">
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="remember"
-                                className="h-4 w-4 text-blue-theme focus:ring-blue-theme border-gray-300 rounded"
-                            />
-                            <label htmlFor="remember" className="ml-2 text-gray-700">
-                                Remember me
-                            </label>
-                        </div>
-                        <button
-                            type="button"
-                            className="text-blue-theme hover:underline font-medium"
-                        >
-                            Forgot password?
-                        </button>
-                    </div>
-                )}
+            >
+                <h1 className="text-3xl font-bold text-gray-900">{heading}</h1>
+                <p className="text-sm text-gray-500 mt-2">{subHeading}</p>
                 <div className="mt-6 space-y-4">
-                    {error && (
-                        <p className="text-red-theme text-sm font-medium">
-                            {error.message}
-                        </p>
+                    {formType === 'register' && (
+                        <TextField
+                            label="Full Name"
+                            placeholder="Full Name"
+                            name="name"
+                            type="text"
+                            value={values.name}
+                            onChange={(e) => handleChange(e)}
+                            required={true}
+                        />
                     )}
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        loading={loading}
-                        className="w-full"
-                    >
-                        {loading ? 'Loading...' : formType === 'login' ? 'Login' : 'Register'}
-                    </Button>
-                </div>
-                <div className="mt-6 text-center text-sm">
-                    {formType === 'login' ? (
-                        <div className="flex justify-center items-center gap-1">
-                            <p className="text-gray-600">Don't have an account?</p>
-                            <Link
-                                to="/register"
+                    <TextField
+                        label="Email"
+                        placeholder="Enter your email"
+                        name="email"
+                        type="email"
+                        value={values.email}
+                        onChange={(e) => handleChange(e)}
+                        required={true}
+                    />
+                    <TextField
+                        label="Password"
+                        placeholder="Enter your password"
+                        name="password"
+                        type="password"
+                        value={values.password}
+                        onChange={(e) => handleChange(e)}
+                        required={true}
+                    />
+                    {formType === 'register' && (
+                        <TextField
+                            label="Confirm Password"
+                            placeholder="Confirm Password"
+                            name="confirmPassword"
+                            type="password"
+                            value={values.confirmPassword}
+                            onChange={(e) => handleChange(e)}
+                            required={true}
+                        />
+                    )}
+                    {formType === 'login' && (
+                        <div className="mt-4 flex justify-between items-center text-sm">
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    id="remember"
+                                    className="h-4 w-4 text-blue-theme focus:ring-blue-theme border-gray-300 rounded"
+                                />
+                                <label htmlFor="remember" className="ml-2 text-gray-700">
+                                    Remember me
+                                </label>
+                            </div>
+                            <button
+                                type="button"
                                 className="text-blue-theme hover:underline font-medium"
                             >
-                                Sign up
-                            </Link>
-                        </div>
-                    ) : (
-                        <div className="flex justify-center items-center gap-1">
-                            <p className="text-gray-600">Already have an account?</p>
-                            <Link
-                                to="/login"
-                                className="text-blue-theme hover:underline font-medium"
-                            >
-                                Sign in
-                            </Link>
+                                Forgot password?
+                            </button>
                         </div>
                     )}
+                    <div className="mt-6 space-y-4">
+                        {error && (
+                            <p className="text-red-theme text-sm font-medium">
+                                {error.message}
+                            </p>
+                        )}
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            loading={loading}
+                            className="w-full"
+                        >
+                            {loading ? 'Loading...' : formType === 'login' ? 'Login' : 'Register'}
+                        </Button>
+                    </div>
+                    <div className="mt-6 text-center text-sm">
+                        {formType === 'login' ? (
+                            <div className="flex justify-center items-center gap-1">
+                                <p className="text-gray-600">Don't have an account?</p>
+                                <Link
+                                    to="/register"
+                                    className="text-blue-theme hover:underline font-medium"
+                                >
+                                    Sign up
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="flex justify-center items-center gap-1">
+                                <p className="text-gray-600">Already have an account?</p>
+                                <Link
+                                    to="/login"
+                                    className="text-blue-theme hover:underline font-medium"
+                                >
+                                    Sign in
+                                </Link>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     );
 }
 

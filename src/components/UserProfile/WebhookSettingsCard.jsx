@@ -24,7 +24,10 @@ export default function WebhookSettingsCard({ repos, userId }) {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/webhooks/list?user_id=${userId}`);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5000/api/webhooks/list?user_id=${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await response.json();
       if (Array.isArray(data)) {
         setConfiguredWebhooks(data);
@@ -52,7 +55,10 @@ export default function WebhookSettingsCard({ repos, userId }) {
 
     const checkWebhook = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/webhooks/check?repo_id=${selectedRepo}`);
+        const token = localStorage.getItem("token");
+        const response = await fetch(`http://localhost:5000/api/webhooks/check?repo_id=${selectedRepo}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await response.json();
         if (response.ok) {
           if (data.exists) {
@@ -87,9 +93,13 @@ export default function WebhookSettingsCard({ repos, userId }) {
     }
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:5000/api/webhooks/configure", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
         body: JSON.stringify({
           repo_id: selectedRepo,
           webhook_secret: webhookSecret,
@@ -126,9 +136,13 @@ export default function WebhookSettingsCard({ repos, userId }) {
 
   const handleUpdateWebhook = async (repoId, newSecret) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:5000/api/webhooks/update", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
         body: JSON.stringify({
           repo_id: repoId,
           webhook_secret: newSecret || undefined,
@@ -164,9 +178,13 @@ export default function WebhookSettingsCard({ repos, userId }) {
 
   const handleDeleteWebhook = async (repoId) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:5000/api/webhooks/delete", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
         body: JSON.stringify({ repo_id: repoId }),
       });
 
@@ -193,9 +211,13 @@ export default function WebhookSettingsCard({ repos, userId }) {
     const newActive = !webhook.active;
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:5000/api/webhooks/update", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
         body: JSON.stringify({
           repo_id: repoId,
           active: newActive,

@@ -3,7 +3,9 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   BoxIconLine,
-  GroupIcon,
+  CheckLineIcon,
+  TimeIcon,
+  LineChartIcon,
 } from "../../icons";
 import Badge from "../ui/badge/Badge";
 
@@ -15,7 +17,22 @@ export default function CardMetrics({ pipelineStats }) {
       {/* Total Pipelines */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-[#1d2939]">
-          <GroupIcon className="text-gray-800 size-6 dark:text-gray-200" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-6 h-6 text-gray-800 dark:text-gray-200"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="3 17 9 11 13 15 21 7" />
+          <circle cx="3" cy="17" r="1" />
+          <circle cx="9" cy="11" r="1" />
+          <circle cx="13" cy="15" r="1" />
+          <circle cx="21" cy="7" r="1" />
+        </svg>
         </div>
         <div className="flex flex-wrap items-end justify-between mt-5 gap-2">
           <div>
@@ -32,7 +49,7 @@ export default function CardMetrics({ pipelineStats }) {
       {/* Success Rate */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-[#1d2939]">
-          <BoxIconLine className="text-gray-800 size-6 dark:text-gray-200" />
+          <CheckLineIcon className="text-gray-800 size-6 dark:text-gray-200" />
         </div>
         <div className="flex flex-wrap items-end justify-between mt-5 gap-2">
           <div>
@@ -60,7 +77,20 @@ export default function CardMetrics({ pipelineStats }) {
       {/* Failed Builds */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-[#1d2939]">
-          <BoxIconLine className="text-gray-800 size-6 dark:text-gray-200" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6 text-gray-800 size-6 dark:text-gray-200"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <circle cx="12" cy="16" r="1" />
+          </svg>
         </div>
         <div className="flex flex-wrap items-end justify-between mt-5 gap-2">
           <div>
@@ -77,7 +107,7 @@ export default function CardMetrics({ pipelineStats }) {
               <span className="hidden sm:block">No change (30 days)</span>
             </Badge>
           ) : (
-            <Badge color={failed_builds_change > 0 ? "success" : "error"}>
+            <Badge color={failed_builds_change > 0 ? "warning" : "error"}>
               {failed_builds_change > 0 ? <ArrowUpIcon /> : <ArrowDownIcon />}
               {Math.abs(failed_builds_change).toFixed(2)}% <span className="hidden sm:inline">(30 days)</span>
             </Badge>
@@ -88,7 +118,7 @@ export default function CardMetrics({ pipelineStats }) {
       {/* Average Run Time */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-[#1d2939]">
-          <BoxIconLine className="text-gray-800 size-6 dark:text-gray-200" />
+          <TimeIcon className="text-gray-800 size-6 dark:text-gray-200" />
         </div>
         <div className="flex flex-wrap items-end justify-between mt-5 gap-2">
           <div>

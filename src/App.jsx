@@ -11,6 +11,8 @@ import Dashboard from "./pages/Dashboard";
 import Repository from "./pages/Repository";
 import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/OtherPage/NotFound";
+import User from "./pages/User";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import TestPage from "./pages/TestPage";
 
@@ -36,8 +38,17 @@ function App() {
             <Route path="/workflows" element={<TestPage />} />
             <Route path="/prediction-metrics" element={<NotFound />} />
             <Route path="/repositories" element={<Repository />} />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <User />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/settings" element={<AccountSettings />} />
-            <Route path="*" element={<NotFound />} /> 
+            <Route path="/unauthorized" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -16,21 +16,12 @@ const LoginPage = () => {
 
   return (
     <FullLayout>
-      <div className='flex w-full h-screen'>
-        <div className="w-full flex items-center justify-center lg:w-1/2">
-          <Form
-            formType="login"
-            heading={'Login to your account'}
-            subHeading={'Welcome back! Please enter you details.'}
-            handleResponse={handleSubmit}
-          />
-        </div>
-        <img
-          src="/assets/images/devops.svg"
-          alt="login"
-          className="hidden lg:block w-1/2 h-screen object-cover object-center"
-        />
-      </div>
+      <Form
+        formType="login"
+        heading={'Login to your account'}
+        subHeading={'Welcome back! Please enter you details.'}
+        handleResponse={handleSubmit}
+      />
     </FullLayout>
   );
 }

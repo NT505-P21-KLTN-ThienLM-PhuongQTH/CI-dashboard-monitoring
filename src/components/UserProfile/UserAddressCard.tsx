@@ -18,9 +18,10 @@ export default function UserAddressCard({ userData }) {
 
   const handleOk = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_APP_API_URL}userdata/${userData.user_id}`, {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/userdata/${userData.user_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ address: formData.address }),
       });
       if (!response.ok) throw new Error("Failed to update user data");

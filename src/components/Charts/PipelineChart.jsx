@@ -33,7 +33,7 @@ const PipelineChart = ({ selectedRepoId, selectedBranch, selectedWorkflowId }) =
 
       setLoading(true);
       try {
-        let url = `http://localhost:5000/api/pipeline-data?user_id=${user.id}&timeUnit=${timeUnit}&recentDays=500`;
+        let url = `http://localhost:5000/api/workflow_run/pipeline-data?user_id=${user.id}&timeUnit=${timeUnit}&recentDays=500`;
         if (selectedRepoId) {
           url += `&repo_id=${selectedRepoId}`;
         }

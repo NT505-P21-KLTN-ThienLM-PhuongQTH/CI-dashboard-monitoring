@@ -25,7 +25,19 @@ export default function AccountSettings() {
 
     const fetchUserData = async () => {
       try {
-        const userDataResponse = await fetch(`http://localhost:5000/api/userdata/${userId}`);
+        const token = localStorage.getItem("token"); // Lấy token từ localStorage
+        if (!token) {
+          setError("No authentication token found. Please log in.");
+          setLoading(false);
+          return;
+        }
+
+        // Gọi API user data với token
+        const userDataResponse = await fetch(`http://localhost:5000/api/userdata/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+          },
+        });
         if (!userDataResponse.ok) {
           console.error("Error fetching user data:", userDataResponse.statusText);
           throw new Error(`Failed to fetch user data: ${userDataResponse.statusText}`);
@@ -33,7 +45,12 @@ export default function AccountSettings() {
         const userData = await userDataResponse.json();
         setUserData(userData);
 
-        const reposResponse = await fetch(`http://localhost:5000/api/repos?user_id=${userId}`);
+        // Gọi API repos với token
+        const reposResponse = await fetch(`http://localhost:5000/api/repos?user_id=${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+          },
+        });
         if (!reposResponse.ok) {
           console.error("Error fetching repos:", reposResponse.statusText);
           throw new Error(`Failed to fetch repos: ${reposResponse.statusText}`);
@@ -61,7 +78,7 @@ export default function AccountSettings() {
         description="Settings for your account and profile information."
       />
       <PageBreadcrumb
-        pageTitle="Account Settings"
+        pageTitle="Settings"
         description="Settings for your account and profile information."
       />
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6">

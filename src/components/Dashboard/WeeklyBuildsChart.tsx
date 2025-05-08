@@ -21,12 +21,20 @@ export default function WeeklyBuildsChart({ userId, repoId, branch, workflowId }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
   useEffect(() => {
     const fetchBuildData = async () => {
       setLoading(true);
       try {
+        const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:5000/api/pipeline-data?user_id=${userId}&repo_id=${repoId}&branch=${branch}&workflow_id=${workflowId}&timeUnit=day&recentDays=${recentDays}`
+          `${API_URL}/workflow_run/pipeline-data?user_id=${userId}&repo_id=${repoId}&branch=${branch}&workflow_id=${workflowId}&timeUnit=day&recentDays=${recentDays}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         if (!response.ok) {
           const errorData = await response.json();
@@ -161,7 +169,7 @@ export default function WeeklyBuildsChart({ userId, repoId, branch, workflowId }
           show: true,
         },
       },
-      borderColor: "rgba(173, 181, 189, 0.2)",
+      borderColor: "rgba(173, 181, 189, 0.4)",
     },
     fill: {
       opacity: 1,

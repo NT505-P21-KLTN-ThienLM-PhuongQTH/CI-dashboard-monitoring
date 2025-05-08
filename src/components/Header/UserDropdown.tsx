@@ -40,9 +40,16 @@ export default function UserDropdown() {
           )}
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">
-          {user?.name ? `Hi, ${user.name}` : "Hi, User"}
-        </span>
+        <div>
+          <span className="block mr-1 font-bold text-theme-sm">
+            {user?.name ? `Hi, ${user.name}!` : "Hi, User!"}
+          </span>
+          {user?.role === "admin" ? (
+            <span className="block text-xs text-gray-500 dark:text-gray-400 capitalize">
+              {user.role}
+            </span>
+          ) : null}
+        </div>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -123,7 +130,7 @@ export default function UserDropdown() {
               fill=""
             />
           </svg>
-          Sign out
+          Logout
         </button>
       </Dropdown>
     </div>

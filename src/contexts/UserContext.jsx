@@ -32,7 +32,7 @@ const UserProvider = ({ children }) => {
         id: userData.id,
         name: userData.name,
         email: userData.email,
-        role: userData.role[0], // Assuming role is an array and we want the first element
+        role: userData.role,
         auth: true,
     };
     setUser(newUser);
