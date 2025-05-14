@@ -151,7 +151,7 @@ function Dashboard() {
         );
         const token = localStorage.getItem("token");
         const workflowsResponse = await axios.get(
-          `${API_URL}/workflow?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}`,
+          `${API_URL}/workflow/with-runs?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

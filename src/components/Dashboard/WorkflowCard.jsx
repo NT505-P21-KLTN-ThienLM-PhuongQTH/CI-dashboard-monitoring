@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { ShootingStarIcon } from "../../icons";
 import Badge from "../ui/badge/Badge";
+import { useNavigate } from "react-router-dom";
+import { Dropdown } from "../ui/dropdown/Dropdown";
+import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { MoreDotIcon } from "../../icons";
 
 export default function WorkflowCard({ workflowId }) {
+  const navigate = useNavigate();
   const [workflowDetails, setWorkflowDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -27,6 +32,7 @@ export default function WorkflowCard({ workflowId }) {
           },
         });
         setWorkflowDetails(response.data);
+        console.log("Workflow details:", response.data);
       } catch (err) {
         setError(err.response?.data?.error || err.message);
       } finally {
@@ -36,6 +42,19 @@ export default function WorkflowCard({ workflowId }) {
 
     fetchWorkflowDetails();
   }, [workflowId]);
+
+  function toggleDropdown() {
+    setIsOpen(!isOpen);
+  }
+
+  function closeDropdown() {
+    setIsOpen(false);
+  }
+
+  const handleViewMore = () => {
+    navigate("/workflows");
+    closeDropdown();
+  };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
@@ -48,7 +67,23 @@ export default function WorkflowCard({ workflowId }) {
             The details of the workflow are as follows
           </p>
         </div>
-        <ShootingStarIcon className="text-gray-800 size-6 dark:text-gray-200" />
+        <div className="relative inline-block">
+          <button className="dropdown-toggle" onClick={toggleDropdown}>
+            <MoreDotIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 size-6" />
+          </button>
+          <Dropdown
+            isOpen={isOpen}
+            onClose={closeDropdown}
+            className="w-40 p-2"
+          >
+            <DropdownItem
+              onItemClick={handleViewMore}
+              className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+            >
+              View More
+            </DropdownItem>
+          </Dropdown>
+        </div>
       </div>
 
       {loading ? (

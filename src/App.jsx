@@ -4,7 +4,7 @@ import DefaultLayout from "./layouts/DefaultLayout";
 import { UserProvider } from "./contexts/UserContext";
 import { ToastContainer } from 'react-toastify';
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import { publicRoutes } from "./routes";
+// import { publicRoutes } from "./routes";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -12,9 +12,8 @@ import Repository from "./pages/Repository";
 import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/OtherPage/NotFound";
 import User from "./pages/User";
+import Workflow from "./pages/Workflow";
 import ProtectedRoute from "./components/ProtectedRoute";
-
-import TestPage from "./pages/TestPage";
 
 function App() {
   return (
@@ -35,7 +34,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route element={<DefaultLayout />}>
             <Route index path="/" element={<Dashboard />} />
-            <Route path="/workflows" element={<TestPage />} />
+            <Route path="/workflows" element={<Workflow />} />
             <Route path="/prediction-metrics" element={<NotFound />} />
             <Route path="/repositories" element={<Repository />} />
             <Route
