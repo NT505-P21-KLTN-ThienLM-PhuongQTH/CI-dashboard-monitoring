@@ -237,7 +237,7 @@ export default function Workflows() {
       title: "No.",
       key: "index",
       width: 60,
-      render: (text, record, index) => <span className="text-gray-700 text-start text-sm dark:text-gray-300">{index + 1}</span>,
+      render: (text, record, index) => <span className="text-gray-700 text-sm dark:text-gray-300 text-center">{index + 1}</span>,
     },
     {
       title: "Path",

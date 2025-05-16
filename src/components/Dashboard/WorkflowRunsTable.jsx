@@ -121,12 +121,16 @@ const WorkflowRunsTable = ({ workflowId, selectedBranch }) => {
       title: "Head SHA",
       dataIndex: "head_sha",
       key: "head_sha",
+      width: 100,
       render: (text) => (
-        <span
-          className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]"
-          title={text}
-        >
-          {text || "-"}
+        // <span
+        //   className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]"
+        //   title={text}
+        // >
+        //   {text || "-"}
+        // </span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap w-full block" style={{ maxWidth: '100px' }}>
+          {text.substring(0, 7)}
         </span>
       ),
     },
@@ -367,6 +371,7 @@ const WorkflowRunsTable = ({ workflowId, selectedBranch }) => {
             <p>
               <strong>Head SHA:</strong> {selectedRun.head_sha || "-"}
             </p>
+            <p><strong>Display Title:</strong> {selectedRun.display_title || "-"}</p>
             <p>
               <strong>Run Number:</strong> {selectedRun.run_number || "-"}
             </p>

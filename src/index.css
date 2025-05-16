@@ -685,6 +685,14 @@
   @apply z-99999 !important;
 }
 
+/* Ant Drawer */
+.ant-drawer-content {
+  @apply bg-white dark:bg-[#1a2231] text-black dark:text-[#d9d9d9] border-none rounded-lg !important;
+}
+.ant-drawer-close {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+
 /* Filter Dropdown */
 .ant-table-filter-dropdown {
   @apply bg-white dark:bg-[#1a2231] border border-[#e4e7ec] dark:border-[#1d2939] rounded-lg text-black dark:text-[#d9d9d9];
