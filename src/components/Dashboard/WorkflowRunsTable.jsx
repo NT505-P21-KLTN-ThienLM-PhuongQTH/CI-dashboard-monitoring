@@ -277,6 +277,8 @@ const WorkflowRunsTable = ({ workflowId, selectedBranch }) => {
         dataSource={filteredRuns}
         rowKey="id"
         loading={loading}
+        bordered
+        size="small"
         pagination={{
           current: currentPage,
           pageSize: 7,

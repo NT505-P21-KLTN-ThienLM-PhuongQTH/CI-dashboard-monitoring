@@ -732,3 +732,19 @@
 .dark .ant-dropdown-menu.ant-dropdown-menu-light {
   @apply bg-[#f2f4f7] dark:bg-[#1d2939];
 }
+
+/* Ant Tabs */
+.ant-tabs-tab {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}
+.ant-tabs-tab-active {
+  @apply text-[#2563eb] dark:text-[#3b82f6];
+}
+.ant-tabs-ink-bar {
+  @apply bg-[#2563eb] dark:bg-[#3b82f6];
+}
+
+/* Ant Radio Button */
+.ant-radio-label {
+  @apply text-gray-700 dark:text-[#d9d9d9];
+}

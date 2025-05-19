@@ -1,9 +1,8 @@
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-
 import NotificationTable from "../../components/DataTable/NotificationTable";
 
-export default function TestPage() {
+export default function Notification() {
     return (
         <>
         <PageMeta

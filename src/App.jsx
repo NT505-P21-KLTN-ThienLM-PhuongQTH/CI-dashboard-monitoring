@@ -4,7 +4,6 @@ import DefaultLayout from "./layouts/DefaultLayout";
 import { UserProvider } from "./contexts/UserContext";
 import { ToastContainer } from 'react-toastify';
 import { ScrollToTop } from "./components/common/ScrollToTop";
-// import { publicRoutes } from "./routes";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,6 +14,7 @@ import NotFound from "./pages/OtherPage/NotFound";
 import User from "./pages/User";
 import Workflow from "./pages/Workflow";
 import Notification from "./pages/Notification";
+import CurrentModel from "./pages/Model/CurrentModel";
 
 function App() {
   return (
@@ -47,6 +47,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/current-model" element={<CurrentModel />}/>
             <Route path="/settings" element={<AccountSettings />} />
             <Route path="/unauthorized" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />

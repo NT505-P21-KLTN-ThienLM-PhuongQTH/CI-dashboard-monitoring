@@ -401,6 +401,7 @@ const NotificationTable = () => {
             </Button>
           </div>
         }
+        className='bg-white dark:bg-white/[0.03]'
       >
         {selectedWorkflowRun && (
           <div className="space-y-5">
@@ -430,12 +431,12 @@ const NotificationTable = () => {
               </div>
             )}
 
-            <hr className="block text-sm font-sm text-gray-300 dark:text-gray-700" />
+            <hr className="block text-sm font-sm text-gray-200 dark:text-gray-800" />
 
             {/* Pipeline Overview */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pipeline Overview</h3>
-              <div className="border border-gray-300 dark:border-gray-700 rounded-2xl p-4 space-y-2">
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
                 <p>
                   <strong>Name:</strong> {selectedWorkflowRun.name || '-'}
                 </p>
@@ -473,7 +474,7 @@ const NotificationTable = () => {
             {/* Execution Details */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Execution Details</h3>
-              <div className="border border-gray-300 dark:border-gray-700 rounded-2xl p-4 space-y-2">
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
                 <p>
                   <strong>Head Branch:</strong>{' '}
                   {selectedWorkflowRun.head_branch || '-'}
@@ -527,7 +528,7 @@ const NotificationTable = () => {
             {/* Timeline & Links */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timeline & Links</h3>
-              <div className="border border-gray-300 dark:border-gray-700 rounded-2xl p-4 space-y-2">
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
                 <p>
                   <strong>Created At:</strong>{' '}
                   {selectedWorkflowRun.created_at
@@ -562,7 +563,7 @@ const NotificationTable = () => {
             {repoData && (
               <div>
                 <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Repository Info</h3>
-                <div className="border border-gray-300 dark:border-gray-700 rounded-2xl p-4 space-y-2">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
                   <p>
                     <strong>Full Name:</strong> {repoData.full_name || '-'}
                   </p>

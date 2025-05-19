@@ -13,12 +13,12 @@ export default {
       screens: {
         '2xsm': '375px',
         xsm: '425px',
-        '3xl': '2000px',
         sm: '640px',
         md: '768px',
         lg: '1024px',
         xl: '1280px',
         '2xl': '1536px',
+        '3xl': '2000px',
       },
       fontSize: {
         'heading-1': '3.375rem',
