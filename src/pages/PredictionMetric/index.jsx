@@ -392,7 +392,7 @@ function PredictionMetric() {
               <Spin />
             </div>
           ) : ciBuilds.length > 0 ? (
-            <div className="max-h-[500px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-hidden hover:overflow-y-auto">
               <pre className="text-sm text-gray-800 dark:text-white/90 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                 {JSON.stringify({ ci_builds: ciBuilds }, null, 2)}
               </pre>
