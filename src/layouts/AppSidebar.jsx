@@ -20,7 +20,6 @@ const navItems = [
     icon: <GridIcon />,
     subItems: [
       { name: "Overview", path: "/", pro: false },
-      { name: "Prediction Metrics", path: "/prediction-metrics", pro: false },
       { name: "Notifications", path: "/notifications", pro: false },
     ],
   },
@@ -45,7 +44,7 @@ const navItems = [
     icon: <PieChartIcon />,
     subItems: [
       { name: "Current Model", path: "/current-model", pro: false },
-      { name: "All Models", path: "/all-models", pro: false },
+      { name: "Prediction Metrics", path: "/prediction-metrics", pro: false },
     ],
   },
 ];

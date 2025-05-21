@@ -51,20 +51,32 @@ function CurrentModel() {
             Hello
         </label>
       </div> */}
-      <Tabs defaultActiveKey="1" className="block text-md font-medium text-gray-700 dark:text-gray-300">
-          <TabPane tab="Model Info" key="1">
-            <ModelInfoTab modelData={modelData} />
-          </TabPane>
-          <TabPane tab="Model List" key="2">
-            <ModelListTab
-              appSelectedModel={appSelectedModel}
-              setAppSelectedModel={setAppSelectedModel}
-            />
-          </TabPane>
-          <TabPane tab="Prediction" key="3">
-            <PredictionTab modelData={modelData} />
-          </TabPane>
-        </Tabs>
+      <Tabs
+        defaultActiveKey="1"
+        className="block text-md font-medium text-gray-700 dark:text-gray-300"
+        items={[
+          {
+            label: "Model Info",
+            key: "1",
+            children: <ModelInfoTab modelData={modelData} />,
+          },
+          {
+            label: "Model List",
+            key: "2",
+            children: (
+              <ModelListTab
+                appSelectedModel={appSelectedModel}
+                setAppSelectedModel={setAppSelectedModel}
+              />
+            ),
+          },
+          {
+            label: "Prediction",
+            key: "3",
+            children: <PredictionTab modelData={modelData} />,
+          },
+        ]}
+      />
     </>
   );
 }

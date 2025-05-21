@@ -15,6 +15,7 @@ import User from "./pages/User";
 import Workflow from "./pages/Workflow";
 import Notification from "./pages/Notification";
 import CurrentModel from "./pages/Model/CurrentModel";
+import PredictionMetric from "./pages/PredictionMetric";
 
 function App() {
   return (
@@ -35,7 +36,6 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route element={<DefaultLayout />}>
             <Route index path="/" element={<Dashboard />} />
-            <Route path="/prediction-metrics" element={<NotFound />} />
             <Route path="/notifications" element={<Notification />} />
             <Route path="/repositories" element={<Repository />} />
             <Route path="/workflows" element={<Workflow />} />
@@ -48,6 +48,7 @@ function App() {
               }
             />
             <Route path="/current-model" element={<CurrentModel />}/>
+            <Route path="/prediction-metrics" element={<PredictionMetric />} />
             <Route path="/settings" element={<AccountSettings />} />
             <Route path="/unauthorized" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />

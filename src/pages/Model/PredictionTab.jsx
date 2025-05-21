@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Select, Input, Button, message, Radio } from "antd";
-import { EyeOutlined } from "@ant-design/icons"; // Icon cho Show Input Format
+import { Select, Input, Button, message, Radio, Spin } from "antd";
+import { EyeOutlined } from "@ant-design/icons";
 import Badge from "../../components/ui/badge/Badge";
 import DropzoneComponent from "../../components/form/form-elements/DropZone";
+import axios from "axios";
 
 const { TextArea } = Input;
 
@@ -12,34 +13,67 @@ const PredictionTab = ({ modelData }) => {
   const [fileData, setFileData] = useState(null);
   const [textInput, setTextInput] = useState("");
   const [showFormatHint, setShowFormatHint] = useState(false);
-  const [inputMethod, setInputMethod] = useState("upload"); // "upload" hoặc "manual"
+  const [inputMethod, setInputMethod] = useState("upload");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Simulate prediction result (placeholder for API)
-  const simulatePrediction = (inputData) => {
-    const parsedData = JSON.parse(inputData);
-    const ciBuilds = parsedData.ci_builds || [];
-    if (ciBuilds.length > 0) {
-      const firstBuild = ciBuilds[0];
-      const projectName = firstBuild.gh_project_name;
-      const gitBranch = firstBuild.git_branch;
-      const isValid = ciBuilds.every(
-        (build) =>
-          build.gh_project_name === projectName && build.git_branch === gitBranch
-      );
-      if (!isValid) {
-        message.error("gh_project_name and git_branch must be consistent across all ci_builds.");
+  // Gọi API predict
+  const callPredictAPI = async (inputData) => {
+    setIsLoading(true);
+    try {
+      const parsedData = JSON.parse(inputData);
+      const ciBuilds = parsedData.ci_builds || [];
+
+      // Validate gh_project_name và git_branch
+      if (ciBuilds.length > 0) {
+        const firstBuild = ciBuilds[0];
+        const projectName = firstBuild.gh_project_name;
+        const gitBranch = firstBuild.git_branch;
+        const isValid = ciBuilds.every(
+          (build) =>
+            build.gh_project_name === projectName && build.git_branch === gitBranch
+        );
+        if (!isValid) {
+          message.error("gh_project_name and git_branch must be consistent across all ci_builds.");
+          return;
+        }
+      } else {
+        message.error("No ci_builds data found in input.");
         return;
       }
 
-      setTimeout(() => {
-        setPredictionResult({
-          result: fileData ? "pass" : "fail",
-          projectName,
-          gitBranch,
-        });
-      }, 1000);
-    } else {
-      message.error("No ci_builds data found in input.");
+      const body = {
+        predict_name: testSelectedModel,
+        predict_version: modelData?.latest_versions[0]?.version || "latest",
+        ci_builds: ciBuilds,
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_PREDICT_URL}/predict`,
+        body,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = response.data;
+      // const confidencePercentage = (data.probability / data.threshold) * 100;
+      setPredictionResult({
+        buildFailed: data.build_failed,
+        projectName: ciBuilds[0].gh_project_name,
+        gitBranch: ciBuilds[0].git_branch,
+        // confidencePercentage: Number(confidencePercentage.toFixed(2)), // Làm tròn 2 chữ số
+        executionTime: data.execution_time,
+        timestamp: data.timestamp,
+        data: data, // Lưu toàn bộ response
+      });
+      console.log("Prediction API response:", data);
+    } catch (error) {
+      message.error(error?.response?.data?.message || error.message || "Error calling prediction API.");
+      setPredictionResult(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,7 +87,7 @@ const PredictionTab = ({ modelData }) => {
           const content = e.target.result;
           setFileData(file);
           setTextInput(content);
-          simulatePrediction(content);
+          callPredictAPI(content);
         } catch (error) {
           message.error("Invalid JSON or CSV file.");
         }
@@ -62,15 +96,25 @@ const PredictionTab = ({ modelData }) => {
     }
   };
 
-  // Handle text input change
+  // Handle manual predict button click
+  const handleManualPredict = () => {
+    try {
+      if (!textInput.trim()) {
+        message.error("Input cannot be empty.");
+        return;
+      }
+      callPredictAPI(textInput);
+    } catch (error) {
+      message.error("Invalid JSON format.");
+      setPredictionResult(null);
+    }
+  };
+
+  // Handle text input change (chỉ cập nhật state, không gọi API)
   const handleTextChange = (e) => {
     setTextInput(e.target.value);
     setFileData(null);
-    try {
-      simulatePrediction(e.target.value);
-    } catch (error) {
-      setPredictionResult(null); // Reset nếu JSON không hợp lệ
-    }
+    setPredictionResult(null);
   };
 
   // Format hint toggle
@@ -232,14 +276,25 @@ const PredictionTab = ({ modelData }) => {
                 placeholder="Enter JSON data here"
                 className="w-full mb-2"
               />
-              <Button
-                type="primary"
-                onClick={toggleFormatHint}
-                style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
-                icon={<EyeOutlined />}
-              >
-                Show Input Format
-              </Button>
+              <div className="flex space-x-2">
+                <Button
+                  type="primary"
+                  onClick={handleManualPredict}
+                  style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <Spin size="small" /> : "Predict"}
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={toggleFormatHint}
+                  style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
+                  icon={<EyeOutlined />}
+                  disabled={isLoading}
+                >
+                  Show Input Format
+                </Button>
+              </div>
               {showFormatHint && (
                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mt-2 bg-gray-50 dark:bg-gray-800">
                   <pre className="text-sm text-gray-700 dark:text-gray-300">
@@ -259,10 +314,10 @@ const PredictionTab = ({ modelData }) => {
               <div>
                 <p
                   className={`text-lg font-semibold ${
-                    predictionResult.result === "pass" ? "text-green-600" : "text-red-600"
+                    !predictionResult.buildFailed ? "text-green-600" : "text-red-600"
                   }`}
                 >
-                  Result: {predictionResult.result.toUpperCase()}
+                  Result: {predictionResult.buildFailed ? "FAIL" : "PASS"}
                 </p>
                 {predictionResult.projectName && predictionResult.gitBranch && (
                   <p className="mt-2">
@@ -277,6 +332,18 @@ const PredictionTab = ({ modelData }) => {
                     </a>
                   </p>
                 )}
+                {/* <p className="mt-2">
+                  <strong>Confidence:</strong>{" "}
+                  {predictionResult.confidencePercentage}%
+                </p> */}
+                <p className="mt-1">
+                  <strong>Execution Time:</strong>{" "}
+                  {Number(predictionResult.executionTime).toFixed(2)} seconds
+                </p>
+                <p className="mt-1">
+                  <strong>Timestamp:</strong>{" "}
+                  {new Date(predictionResult.timestamp).toLocaleString()}
+                </p>
               </div>
             ) : (
               <p className="text-gray-500 dark:text-gray-400">
