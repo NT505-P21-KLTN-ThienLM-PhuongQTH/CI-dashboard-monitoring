@@ -296,7 +296,18 @@ const NotificationTable = () => {
         title="Commit Details"
         open={isDetailModalOpen}
         onCancel={handleModalClose}
-        footer={null}
+        footer={
+          <div className="flex justify-end">
+            <Button
+              type="primary"
+              icon={<EyeOutlined />}
+              onClick={() => fetchWorkflowRun(selectedCommit.workflow_run_id)}
+              style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+            >
+              View Pipeline
+            </Button>
+          </div>
+        }
       >
         {selectedCommit && (
           <div className="space-y-4">
@@ -371,16 +382,6 @@ const NotificationTable = () => {
               >
                 View in GitHub
               </a>
-            </div>
-            <div className="flex justify-end">
-              <Button
-                type="primary"
-                icon={<EyeOutlined />}
-                onClick={() => fetchWorkflowRun(selectedCommit.workflow_run_id)}
-                style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
-              >
-                View Pipeline
-              </Button>
             </div>
           </div>
         )}

@@ -117,7 +117,7 @@ export default function UserAddressCard({ userData }) {
         okText="Save Changes"
         cancelText="Close"
       >
-        <div className="flex flex-col mt-6">
+        <div className="flex flex-col">
           <div className="overflow-y-auto max-h-[450px] px-2 pb-3">
             <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
               <div>

@@ -143,7 +143,15 @@ function PredictionMetric() {
         );
         const ciBuildsData = ciBuildsResponse.data.ci_builds || [];
         console.log("CI builds fetched:", ciBuildsData);
-        setCiBuilds(ciBuildsData);
+
+        // Loại bỏ trường _id từ mỗi object trong ci_builds
+        const cleanedCiBuildsData = ciBuildsData.map(build => {
+          const { _id, ...rest } = build;
+          return rest;
+        });
+
+        console.log("CI builds after removing _id:", cleanedCiBuildsData);
+        setCiBuilds(cleanedCiBuildsData);
       } catch (error) {
         console.error("Error in fetchCiBuilds:", error);
         message.error(error.response?.data?.error || error.message);
@@ -363,9 +371,14 @@ function PredictionMetric() {
         {/* Right Side: Prediction Metrics (3/5, Scrollable JSON) */}
         <div className="lg:col-span-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Prediction Metrics
-            </h4>
+            <div className="flex flex-col">
+              <label className="mb-1 block text-md font-medium text-gray-700 dark:text-gray-300">
+                Prediction Metrics
+              </label>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                The newest prediction metrics are shown below.
+              </p>
+            </div>
             <Space>
               <Button
                 icon={<CopyOutlined />}
