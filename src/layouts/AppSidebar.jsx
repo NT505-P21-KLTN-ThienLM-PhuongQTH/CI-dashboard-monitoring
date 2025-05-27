@@ -45,6 +45,7 @@ const navItems = [
     subItems: [
       { name: "Current Model", path: "/current-model", pro: false },
       { name: "Prediction Metrics", path: "/prediction-metrics", pro: false },
+      { name: "Prediction History", path: "/prediction-history", pro: false }
     ],
   },
 ];

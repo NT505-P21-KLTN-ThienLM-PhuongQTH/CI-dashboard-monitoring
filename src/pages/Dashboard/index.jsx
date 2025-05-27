@@ -365,7 +365,7 @@ function Dashboard() {
             </div>
           </div>
           <div className="col-span-12 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6 max-w-full overflow-x-auto">
-            <WorkflowRunsTable workflowId={selectedWorkflowId} selectedBranch={selectedBranch} />
+            <WorkflowRunsTable title="Recent Pipeline Runs" workflowId={selectedWorkflowId} selectedBranch={selectedBranch} />
           </div>
         </div>
       ) : (

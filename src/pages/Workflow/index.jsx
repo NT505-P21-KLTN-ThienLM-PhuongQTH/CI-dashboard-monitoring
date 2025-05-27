@@ -272,9 +272,12 @@ export default function Workflows() {
       <PageBreadcrumb pageTitle="Workflows" description="Manage your workflows and settings." />
       <div className="space-y-6">
         <div className="rounded-2xl p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="mb-1 block text-md font-medium text-gray-700 dark:text-gray-300">
             Select Repository
           </label>
+          {/* <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">
+            Choose a repository to view and manage its workflows.
+          </p> */}
           <Select
             style={{ width: "100%" }}
             placeholder="Select a repository"

@@ -5,7 +5,7 @@ import Badge from "../ui/badge/Badge";
 
 const { Search } = Input;
 
-const WorkflowRunsTable = ({ workflowId, selectedBranch }) => {
+const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
   const [runs, setRuns] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -27,13 +27,6 @@ const WorkflowRunsTable = ({ workflowId, selectedBranch }) => {
         params: {
           workflow_id: workflowId,
           branch: selectedBranch,
-          page,
-          limit: 7,
-          ...filters,
-          ...(sorter.field && {
-            sort_field: sorter.field,
-            sort_order: sorter.order === "ascend" ? "asc" : "desc",
-          }),
         },
       });
       setRuns(response.data.runs);
@@ -261,9 +254,11 @@ const WorkflowRunsTable = ({ workflowId, selectedBranch }) => {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
-        Recent Pipeline Runs
-      </h3>
+      {title && (
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
+          {title}
+        </h3>
+      )}
       <div className="mb-4">
         <Search
           placeholder="Search by Head SHA or Event"
