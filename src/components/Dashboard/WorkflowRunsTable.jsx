@@ -294,9 +294,9 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
       >
         {selectedRun && (
           <div className="space-y-4">
-            <p>
+            {/* <p>
               <strong>ID:</strong> {selectedRun._id}
-            </p>
+            </p> */}
             <p>
               <strong>GitHub Run ID:</strong> {selectedRun.github_run_id}
             </p>

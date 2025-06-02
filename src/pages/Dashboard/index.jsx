@@ -345,7 +345,11 @@ function Dashboard() {
           </div>
           <div className="grid grid-cols-1 col-span-12 xl:grid-cols-3 gap-4 md:gap-6 mb-6">
             <div className="col-span-1">
-              <PipelineFailurePredictionChart pipelineStats={pipelineStats} />
+              <PipelineFailurePredictionChart 
+                pipelineStats={pipelineStats}
+                project_name={repos.find(repo => repo.id === selectedRepoId)?.full_name}
+                branch={selectedBranch}
+              />
             </div>
             <div className="col-span-1 md:col-span-2">
               <WeeklyBuildsChart
@@ -361,7 +365,11 @@ function Dashboard() {
               <WorkflowCard workflowId={selectedWorkflowId} />
             </div>
             <div className="col-span-12 xl:col-span-8">
-              <StatisticsChart />
+              <StatisticsChart 
+                userId={user?.id}
+                repoId={selectedRepoId}
+                branch={selectedBranch}
+              />
             </div>
           </div>
           <div className="col-span-12 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6 max-w-full overflow-x-auto">

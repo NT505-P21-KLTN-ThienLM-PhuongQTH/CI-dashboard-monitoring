@@ -3,7 +3,7 @@ import React, { useState } from "react";
 const ChartTab: React.FC<{ setTimePeriod: (period: string) => void }> = ({ setTimePeriod }) => {
   const [selected, setSelected] = useState<
     "optionOne" | "optionTwo" | "optionThree"
-  >("optionOne");
+  >("optionThree"); // Set "optionThree" (Annually) as default
 
   const getButtonClass = (option: "optionOne" | "optionTwo" | "optionThree") =>
     selected === option

@@ -750,6 +750,10 @@
   @apply bg-[#f2f4f7] dark:bg-[#1d2939];
 }
 
+.ant-dropdown-menu-title-content span {
+  @apply text-gray-700 dark:text-[#d9d9d9] !important;
+}
+
 /* Ant Tabs */
 .ant-tabs-tab {
   @apply text-gray-700 dark:text-[#d9d9d9];

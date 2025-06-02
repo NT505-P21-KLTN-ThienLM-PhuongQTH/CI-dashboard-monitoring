@@ -311,9 +311,9 @@ const NotificationTable = () => {
       >
         {selectedCommit && (
           <div className="space-y-4">
-            <p>
+            {/* <p>
               <strong>Commit ID:</strong> {selectedCommit.id || '-'}
-            </p>
+            </p> */}
             <p>
               <strong>SHA:</strong> {selectedCommit.sha || "-"}
             </p>

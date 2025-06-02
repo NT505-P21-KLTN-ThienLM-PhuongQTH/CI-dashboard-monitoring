@@ -278,13 +278,13 @@ export default function NotificationDropdown() {
       >
         {selectedCommit && (
           <div className="space-y-4">
-            <p>
+            {/* <p>
               <strong>Commit ID:</strong> {selectedCommit.id || '-'}
             </p>
             <p>
               <strong>Workflow Run ID:</strong>{' '}
               {selectedCommit.workflow_run_id || '-'}
-            </p>
+            </p> */}
             <p>
               <strong>SHA:</strong> {selectedCommit.sha || "-"}
             </p>

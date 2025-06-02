@@ -17,6 +17,7 @@ import Notification from "./pages/Notification";
 import CurrentModel from "./pages/Model/CurrentModel";
 import PredictionMetric from "./pages/PredictionMetric";
 import PredictionHistory from "./pages/PredictionHistory";
+import Report from "./pages/Report";
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
             <Route path="/current-model" element={<CurrentModel />}/>
             <Route path="/prediction-metrics" element={<PredictionMetric />} />
             <Route path="/prediction-history" element={<PredictionHistory />} />
+            <Route path="/reports" element={<Report />} />
             <Route path="/settings" element={<AccountSettings />} />
             <Route path="/unauthorized" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />

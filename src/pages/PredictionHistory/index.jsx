@@ -40,6 +40,7 @@ function PredictionHistory() {
   const [searchText, setSearchText] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [ciBuilds, setCiBuilds] = useState([]);
+  const [currentRunId, setCurrentRunId] = useState(null);
   const { width } = useWindowSize();
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
@@ -216,6 +217,7 @@ function PredictionHistory() {
         }),
       };
       setCiBuilds(cleanedData);
+      setCurrentRunId(githubRunId);
       setIsModalVisible(true);
     } catch (error) {
       console.error("Error fetching CI builds:", error.response?.data || error.message);
@@ -598,18 +600,32 @@ function PredictionHistory() {
           </div>
         }
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setCurrentRunId(null);
+        }}
         footer={
-          <div style={{ textAlign: "right" }}>
-            <Button
-              type="default"
-              style={{ color: "#ca8a04", borderColor: "#ca8a04" }}
-              icon={<WarningOutlined />}
-              onClick={handleReport}
-            >
-              Report to Admin
-            </Button>
-          </div>
+          currentRunId && runs.length > 0 && ciBuilds.ci_builds?.length > 0 ? (
+            <div style={{ textAlign: "right" }}>
+              {(() => {
+                const run = runs.find(r => r.github_run_id === currentRunId);
+                const prediction = predictions[currentRunId];
+                const predictedResult = prediction?.predicted_result === true ? "failure" : prediction?.predicted_result === false ? "success" : null;
+                const actualResult = run?.conclusion;
+                const isMismatch = predictedResult && actualResult && predictedResult !== actualResult;
+                return isMismatch ? (
+                  <Button
+                    type="default"
+                    style={{ color: "#ca8a04", borderColor: "#ca8a04" }}
+                    icon={<WarningOutlined />}
+                    onClick={handleReport}
+                  >
+                    Report to Admin
+                  </Button>
+                ) : null;
+              })()}
+            </div>
+          ) : null
         }
         width={800}
         style={{ maxHeight: "80vh" }}

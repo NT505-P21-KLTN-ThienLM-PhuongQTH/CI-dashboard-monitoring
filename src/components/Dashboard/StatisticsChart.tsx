@@ -1,47 +1,83 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
+import type { ApexOptions } from "apexcharts";
 import ChartTab from "../common/ChartTab";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 
-export default function StatisticsChart() {
-  const [timePeriod, setTimePeriod] = useState("month");
-  const [selectedYear, setSelectedYear] = useState(2025); // Mặc định năm hiện tại (May 02, 2025)
+interface PipelineData {
+  timeText: string;
+  success: number;
+  failed: number;
+  predictedCorrect: number;
+  successRate: number;
+  failedRate: number;
+  date: string;
+}
+
+export default function StatisticsChart({ userId, repoId, branch }: { userId: string; repoId: string; branch: string }) {
+  const [timePeriod, setTimePeriod] = useState<"month" | "quarter" | "year">("year"); // Mặc định là Annually
+  const [selectedYear, setSelectedYear] = useState<number>(2025);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [availableYears, setAvailableYears] = useState<number[]>([2023, 2024, 2025]);
+  const [pipelineData, setPipelineData] = useState<PipelineData[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Danh sách năm có phát sinh workflow run (sẽ lấy từ API hoặc model)
-  const [availableYears, setAvailableYears] = useState([2023, 2024, 2025]);
+  const API_URL = import.meta.env.VITE_APP_API_URL;
 
-  // Dummy data cho 3 series dựa trên timePeriod và selectedYear
-  const getCategoriesAndSeries = () => {
-    const categories: string[] = [];
-    const failedData: number[] = [];
-    const successData: number[] = [];
-    const predictedData: number[] = [];
+  // Fetch pipeline data từ API
+  useEffect(() => {
+    const fetchPipelineData = async () => {
+      if (!userId || !repoId || !branch) {
+        setPipelineData([]);
+        return;
+      }
 
-    if (timePeriod === "month") {
-      categories.push(...["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
-      failedData.push(...[10, 15, 12, 18, 20, 25, 22, 30, 28, 35, 40, 38]);
-      successData.push(...[180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235]);
-      predictedData.push(...[5, 8, 6, 10, 12, 15, 13, 18, 16, 20, 22, 20]);
-    } else if (timePeriod === "quarter") {
-      categories.push(...["Q1", "Q2", "Q3", "Q4"]);
-      failedData.push(...[37, 50, 50, 78]);
-      successData.push(...[540, 500, 605, 685]);
-      predictedData.push(...[19, 25, 24, 40]);
-    } else if (timePeriod === "year") {
-      categories.push(...availableYears.map(String));
-      failedData.push(...[215, 225, 196]);
-      successData.push(...[2330, 2450, 2105]);
-      predictedData.push(...[108, 112, 98]);
-    }
+      setLoading(true);
+      try {
+        const response = await axios.get(`${API_URL}/workflow_run/pipeline-data`, {
+          params: {
+            "user_id": userId,
+            "repo_id": repoId,
+            "branch": branch,
+            "time-unit": timePeriod,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
-    return { categories, failedData, successData, predictedData };
-  };
+        const data: PipelineData[] = response.data;
+        setPipelineData(data);
+        console.log("Fetched pipeline data:", data);
 
-  const { categories, failedData, successData, predictedData } = getCategoriesAndSeries();
+        // Cập nhật availableYears dựa trên dữ liệu trả về
+        const years = [...new Set(data.map(item => new Date(item.date).getFullYear()))];
+        setAvailableYears(years.sort((a, b) => b - a));
+      } catch (error) {
+        console.error("Error fetching pipeline data:", error);
+        setPipelineData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPipelineData();
+  }, [timePeriod, selectedYear, userId, repoId, branch]);
+
+  // Lọc dữ liệu theo selectedYear
+  const filteredData = pipelineData.filter(item => {
+    const year = new Date(item.date).getFullYear();
+    return timePeriod === "year" || year === selectedYear;
+  });
+
+  // Tạo categories và series cho biểu đồ
+  const categories = filteredData.map(item => item.timeText);
+  const failedData = filteredData.map(item => item.failed);
+  const successData = filteredData.map(item => item.success);
+  const predictedData = filteredData.map(item => item.predictedCorrect);
 
   const options: ApexOptions = {
     legend: {
@@ -159,10 +195,10 @@ export default function StatisticsChart() {
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
         <div className="w-full">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Statistics
+            Pipeline Statistics
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Target you’ve set for each month
+            View the statistics of your pipelines over time.
           </p>
         </div>
         <div className="flex items-start w-full gap-3 sm:justify-end">
@@ -196,7 +232,15 @@ export default function StatisticsChart() {
       </div>
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[1000px] xl:min-w-full">
-          <Chart options={options} series={series} type="area" height={310} />
+          {loading ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">Loading...</p>
+          ) : filteredData.length > 0 ? (
+            <Chart options={options} series={series} type="area" height={310} />
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              No data available for the selected period.
+            </p>
+          )}
         </div>
       </div>
     </div>

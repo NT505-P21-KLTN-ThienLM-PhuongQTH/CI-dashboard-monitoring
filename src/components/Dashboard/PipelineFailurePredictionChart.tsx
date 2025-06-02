@@ -1,69 +1,116 @@
-import React, { useState } from "react";
-import Chart from "react-apexcharts";
-import { ApexOptions } from "apexcharts";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
+import Badge from "../ui/badge/Badge";
+import { Modal, Button } from "antd";
+import { BulbOutlined, CheckOutlined } from "@ant-design/icons";
+import Chart from "react-apexcharts";
+import type { ApexOptions } from "apexcharts";
 
-export default function PipelineFailurePredictionChart({ pipelineStats }) {
+interface PipelineFailurePredictionChartProps {
+  pipelineStats: {
+    recent_failures?: number;
+    failed_builds_change?: number;
+    total_pipelines?: number;
+    last_failure?: number | null;
+  };
+  project_name: string;
+  branch: string;
+}
+
+interface PredictionData {
+  predicted_result: boolean;
+  actual_result: boolean;
+  execution_time: number;
+  timestamp: string;
+  model_name: string;
+  model_version: string;
+}
+
+export default function PipelineFailurePredictionChart({
+  pipelineStats,
+  project_name,
+  branch,
+}: PipelineFailurePredictionChartProps) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [latestPrediction, setLatestPrediction] = useState<PredictionData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  // Sử dụng failure_prediction_rate trực tiếp từ pipelineStats
-  const failurePredictionRate = pipelineStats?.failure_prediction_rate || 57.14; // Giả lập giá trị
-  const message = pipelineStats
-    ? `Based on recent metrics, the next build has a ${failurePredictionRate}% chance of failure.`
-    : "No data available to predict pipeline failure.";
+  const API_URL = import.meta.env.VITE_APP_API_URL;
 
-  const series = [parseFloat(failurePredictionRate.toString())];
+  // Fetch latest prediction based on project_name and branch
+  useEffect(() => {
+    const fetchLatestPrediction = async () => {
+      if (!project_name || !branch) {
+        setLatestPrediction(null);
+        return;
+      }
 
-  const options: ApexOptions = {
-    colors: ["#F46A6A"],
-    chart: {
-      fontFamily: "Outfit, sans-serif",
-      type: "radialBar",
-      height: 330,
-      sparkline: {
-        enabled: true,
-      },
-    },
-    plotOptions: {
-      radialBar: {
-        startAngle: -85,
-        endAngle: 85,
-        hollow: {
-          size: "80%",
-        },
-        track: {
-          background: "#E4E7EC",
-          strokeWidth: "100%",
-          margin: 5,
-        },
-        dataLabels: {
-          name: {
-            show: false,
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${API_URL}/prediction/latest`, {
+          params: {
+            project_name: project_name || "",
+            branch: branch,
           },
-          value: {
-            fontSize: "36px",
-            fontWeight: "600",
-            offsetY: -40,
-            color: "#1D2939",
-            formatter: function (val) {
-              return val + "%";
-            },
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        },
-      },
-    },
-    fill: {
-      type: "solid",
-      colors: ["#F46A6A"],
-    },
-    stroke: {
-      lineCap: "round",
-    },
-    labels: ["Failure Risk"],
+        });
+        setLatestPrediction(response.data);
+      } catch (error) {
+        console.error("Error fetching latest prediction:", error);
+        setLatestPrediction(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestPrediction();
+  }, [project_name, branch]);
+
+  // Format the execution time (processing time in seconds)
+  const formatExecutionTime = (executionTime: number): string => {
+    if (!executionTime) return "N/A";
+    const timeInSeconds = parseFloat(executionTime.toString());
+    if (isNaN(timeInSeconds)) return "N/A";
+    if (timeInSeconds < 1) return `${(timeInSeconds * 1000).toFixed(1)} ms`;
+    return `${timeInSeconds.toFixed(1)} s`;
+  };
+
+  // Format prediction result
+  const formatResult = (result: boolean): string => {
+    return result === true ? "Failure" : result === false ? "Success" : "N/A";
+  };
+
+  // Format timestamp
+  const formatTimestamp = (timestamp: string): string => {
+    if (!timestamp) return "N/A";
+    return new Date(timestamp).toLocaleString();
+  };
+
+  const getMessage = (): string | JSX.Element => {
+    if (!latestPrediction) {
+      return "Kick off your pipeline predictions by adding a job now!";
+    }
+    const actualResult = formatResult(latestPrediction.actual_result);
+    return (
+      <span>
+        Processed on <span className="font-medium">{formatTimestamp(latestPrediction.timestamp)}</span> by model{" "}
+        <span className="font-medium">{latestPrediction.model_name || "N/A"}</span> (version{" "}
+        <span className="font-medium">{latestPrediction.model_version || "N/A"}</span>) with a processing time of{" "}
+        <span className="font-medium">{formatExecutionTime(latestPrediction.execution_time)}</span>. The actual result of the pipeline is{" "}
+        <Badge size="small" color={latestPrediction.actual_result ? "error" : "success"}>
+          {actualResult}
+        </Badge>.
+      </span>
+    );
   };
 
   function toggleDropdown() {
@@ -79,16 +126,79 @@ export default function PipelineFailurePredictionChart({ pipelineStats }) {
     closeDropdown();
   };
 
+  const showModal = () => {
+    setModalVisible(true);
+  };
+
+  const handleModalOk = () => {
+    setModalVisible(false);
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+  };
+
+  // Progress bar options
+  const series = latestPrediction?.predicted_result === true ? [100] : [0];
+  const options: ApexOptions = {
+    chart: {
+      fontFamily: "Outfit, sans-serif",
+      type: "radialBar",
+      height: 250,
+    },
+    plotOptions: {
+      radialBar: {
+        startAngle: -90,
+        endAngle: 90,
+        hollow: {
+          size: "70%",
+        },
+        track: {
+          background: "#E4E7EC",
+          strokeWidth: "100%",
+          margin: 5,
+        },
+        dataLabels: {
+          name: {
+            show: true,
+            fontSize: "16px",
+            fontWeight: "600",
+            offsetY: -10,
+            color: "#6B7280",
+          },
+          value: {
+            show: true,
+            fontSize: "24px",
+            fontWeight: "700",
+            offsetY: 10,
+            color: latestPrediction?.predicted_result === true ? "#F46A6A" : "#039855",
+            formatter: function (val: number) {
+              return latestPrediction?.predicted_result === true ? "Failure" : "Success";
+            },
+          },
+        },
+      },
+    },
+    fill: {
+      type: "solid",
+      colors: [latestPrediction?.predicted_result === true ? "#F46A6A" : "#039855"],
+    },
+    stroke: {
+      lineCap: "round",
+    },
+    labels: ["Status"],
+  };
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-white/[0.03] h-full flex flex-col">
       <div className="px-5 pt-5 bg-white shadow-default rounded-2xl pb-11 dark:bg-gray-900 sm:px-6 sm:pt-6 flex-grow">
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <div>
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Pipeline Failure Prediction
+              Latest Pipeline Prediction
             </h3>
             <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-              Estimated risk of failure for the next pipeline build
+              Results of the most recent prediction for this pipeline
             </p>
           </div>
           <div className="relative inline-block">
@@ -107,6 +217,12 @@ export default function PipelineFailurePredictionChart({ pipelineStats }) {
                 View Details
               </DropdownItem>
               <DropdownItem
+                onItemClick={showModal}
+                className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              >
+                View Hint
+              </DropdownItem>
+              <DropdownItem
                 onItemClick={closeDropdown}
                 className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               >
@@ -115,29 +231,54 @@ export default function PipelineFailurePredictionChart({ pipelineStats }) {
             </Dropdown>
           </div>
         </div>
-        <div className="relative">
-          <div className="max-h-[330px]" id="chartDarkStyle">
-            <Chart
-              options={options}
-              series={series}
-              type="radialBar"
-              height={330}
-            />
-          </div>
-
-          <span className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full bg-error-50 px-3 py-1 text-xs font-medium text-error-600 dark:bg-error-500/15 dark:text-error-500">
-            {failurePredictionRate}%
-          </span>
+        <div className="mt-2 text-center">
+          {loading ? (
+            <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+          ) : latestPrediction ? (
+            <div className="flex flex-col items-center">
+              <div className="relative w-full flex justify-center h-[200px]">
+                <Chart
+                  options={options}
+                  series={series}
+                  type="radialBar"
+                />
+              </div>
+              <p className="w-full max-w-[380px] text-center text-sm text-gray-500 dark:text-gray-400">
+                {getMessage()}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center">
+              <img
+                src="/assets/images/oops/oops_primary.png"
+                alt="Logo"
+                className="my-6 h-24 dark:hidden"
+              />
+              <img
+                src="/assets/images/oops/oops_white.png"
+                alt="Logo"
+                className="my-6 h-24 hidden dark:block"
+              />
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                Kick off your pipeline predictions by adding a job now! Click the button below to see how.
+              </p>
+              <Button
+                type="link"
+                icon={<BulbOutlined />}
+                onClick={showModal}
+                className="text-blue-500 dark:text-blue-400"
+              >
+                Show the hint!
+              </Button>
+            </div>
+          )}
         </div>
-        <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-gray-500 sm:text-base">
-          {message}
-        </p>
       </div>
 
       <div className="flex items-center justify-center gap-5 px-6 py-3.5 sm:gap-8 sm:py-5">
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Recent Failures {/* 7 days */}
+            Recent Failures
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
             {pipelineStats?.recent_failures || 0}
@@ -188,6 +329,44 @@ export default function PipelineFailurePredictionChart({ pipelineStats }) {
           </p>
         </div>
       </div>
+
+      <Modal
+        title="Enable Pipeline Predictions"
+        open={modalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        width={800}
+        footer={
+          <div className="flex justify-end">
+            <Button key="close" onClick={handleModalCancel} style={{ marginRight: 8 }}>
+              Close
+            </Button>
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              onClick={handleModalOk}
+              style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+            >
+              Got it!
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-gray-600 dark:text-gray-300 mb-2">
+          To enable predictions for your pipeline, add the following job to your workflow configuration:
+        </p>
+        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg mb-2">
+          <pre className="text-sm whitespace-pre-wrap break-words">
+{`- name: Predict Build Error
+  uses: NT505-P21-KLTN-ThienLM-PhuongQTH/CI-build-failure-prediction-action@main
+  with:
+    stop-on-failure: false`}
+          </pre>
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+          <strong>Note:</strong> You can set <Badge color="info">stop-on-failure</Badge> to <Badge color="primary"><code>true</code></Badge> to stop the pipeline on failure, or <Badge color="warning"><code>false</code></Badge> to continue running.
+        </p>
+      </Modal>
     </div>
   );
 }

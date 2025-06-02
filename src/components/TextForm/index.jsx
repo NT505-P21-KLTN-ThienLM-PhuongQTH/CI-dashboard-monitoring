@@ -73,11 +73,11 @@ function Form({ formType, heading, subHeading, handleResponse }) {
     return (
         <div className="flex flex-col flex-1 justify-center w-full max-w-md mx-auto">
             <form
-            className="w-full max-w-md mx-auto p-8 rounded-2xl bg-white shadow-lg border border-gray-100"
+            className="w-full max-w-md mx-auto p-8 rounded-2xl bg-white shadow-lg border border-gray-100 dark:bg-gray-800 dark:border-gray-700"
             onSubmit={onSubmit}
             >
-                <h1 className="text-3xl font-bold text-gray-900">{heading}</h1>
-                <p className="text-sm text-gray-500 mt-2">{subHeading}</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{heading}</h1>
+                <p className="text-sm text-gray-500 mt-2 dark:text-gray-400">{subHeading}</p>
                 <div className="mt-6 space-y-4">
                     {formType === 'register' && (
                         <TextField
@@ -127,7 +127,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
                                     id="remember"
                                     className="h-4 w-4 text-blue-theme focus:ring-blue-theme border-gray-300 rounded"
                                 />
-                                <label htmlFor="remember" className="ml-2 text-gray-700">
+                                <label htmlFor="remember" className="ml-2 text-gray-700 dark:text-gray-300">
                                     Remember me
                                 </label>
                             </div>
@@ -157,7 +157,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
                     <div className="mt-6 text-center text-sm">
                         {formType === 'login' ? (
                             <div className="flex justify-center items-center gap-1">
-                                <p className="text-gray-600">Don't have an account?</p>
+                                <p className="text-gray-600 dark:text-gray-400">Don't have an account?</p>
                                 <Link
                                     to="/register"
                                     className="text-blue-theme hover:underline font-medium"
@@ -167,7 +167,7 @@ function Form({ formType, heading, subHeading, handleResponse }) {
                             </div>
                         ) : (
                             <div className="flex justify-center items-center gap-1">
-                                <p className="text-gray-600">Already have an account?</p>
+                                <p className="text-gray-600 dark:text-gray-400">Already have an account?</p>
                                 <Link
                                     to="/login"
                                     className="text-blue-theme hover:underline font-medium"

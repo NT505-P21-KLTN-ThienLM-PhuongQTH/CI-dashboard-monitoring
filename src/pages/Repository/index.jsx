@@ -6,11 +6,11 @@ function Repository() {
   return (
     <>
       <PageMeta
-        title="Repository Overview"
+        title="Repositories"
         description="Manage your repositories and their settings."
       />
       <PageBreadcrumb
-        pageTitle="Repository"
+        pageTitle="Repositories"
         description="Manage your repositories and their settings."
       />
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6 max-w-full overflow-x-auto">

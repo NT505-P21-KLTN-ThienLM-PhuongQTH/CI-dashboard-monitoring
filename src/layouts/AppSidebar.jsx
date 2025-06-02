@@ -9,8 +9,6 @@ import {
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
-  FolderIcon,
-  PieChartIcon,
   GroupIcon,
 } from "../icons";
 
@@ -25,7 +23,15 @@ const navItems = [
   },
   {
     name: "Repositories",
-    icon: <FolderIcon />,
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <path d="M3 3h14a2 2 0 0 1 2 2v4H3V3z"/>
+        <path d="M3 7v14h18V11"/>
+        <circle cx="7.5" cy="14.5" r="1.5"/>
+        <circle cx="16.5" cy="14.5" r="1.5"/>
+        <path d="M7.5 14.5h9"/>
+      </svg>
+    ),
     path: "/repositories",
   },
   {
@@ -41,13 +47,46 @@ const navItems = [
   },
   {
     name: "Models",
-    icon: <PieChartIcon />,
+    icon: (
+      // AI-related SVG icon
+      <svg
+        className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+    ),
     subItems: [
       { name: "Current Model", path: "/current-model", pro: false },
       { name: "Prediction Metrics", path: "/prediction-metrics", pro: false },
       { name: "Prediction History", path: "/prediction-history", pro: false }
     ],
   },
+  {
+    name: "Reports",
+    icon:
+      (
+        <svg
+        className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+        <path d="M7 8H17M7 12H17M7 16H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+      ),
+    path: "/reports",
+    requiresAdmin: true,
+  }
 ];
 
 const othersItems = [
