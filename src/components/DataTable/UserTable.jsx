@@ -1,44 +1,42 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import axios from "axios";
-import { Table, Button, Modal, Form, Input, message, Space, Select, Spin, Row, Col } from "antd";
+import { Table, Button, Modal, Form, Input, message, Space, Select, Row, Col, Drawer } from "antd";
 import { EditOutlined, DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
 import { UserContext } from "../../contexts/UserContext";
 import Badge from "../ui/badge/Badge";
-
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: undefined,
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return windowSize;
-};
 
 const UserTable = () => {
   const { user } = useContext(UserContext);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState({ personal: false, address: false, add: false });
   const [form] = Form.useForm();
   const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [roleFilter, setRoleFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { width } = useWindowSize();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // Lấy danh sách người dùng
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : "U";
+  };
+
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const isPasswordStrong = (password) => {
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    return strongPasswordRegex.test(password);
+  };
+
+  // Fetch user list
   useEffect(() => {
     fetchUsers();
   }, [user.id]);
@@ -47,7 +45,7 @@ const UserTable = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/userdata/all", {
+      const response = await axios.get(`${API_URL}/userdata/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
@@ -88,35 +86,47 @@ const UserTable = () => {
     applyFiltersAndSort(users, searchText, value);
   };
 
-  const showModal = (user = null) => {
+  const showModal = (type, user = null) => {
     setEditingUser(user);
     if (user) {
-      form.setFieldsValue({
-        fullname: user.fullname,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-        github_account: user.github_account,
-      });
+      form.setFieldsValue(
+        type === "personal"
+          ? {
+              fullname: user.fullname,
+              email: user.email,
+              role: user.role,
+              phone: user.phone,
+              pronouns: user.pronouns,
+              bio: user.bio,
+              github_account: user.github_account,
+            }
+          : type === "add"
+          ? {
+              name: user.fullname,
+              email: user.email,
+              password: "",
+              role: user.role,
+            }
+          : {
+              country: user.address?.country || "",
+              cityState: user.address?.cityState || "",
+              postalCode: user.address?.postalCode || "",
+            }
+      );
     } else {
       form.resetFields();
     }
-    setIsModalVisible(true);
+    setIsModalVisible((prev) => ({ ...prev, [type]: true }));
   };
 
-  const openDetailModal = (user) => {
-    setEditingUser(user);
-    setIsDetailModalOpen(true);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    setIsDetailModalOpen(false);
+  const handleCancel = (type) => {
+    setIsModalVisible((prev) => ({ ...prev, [type]: false }));
+    setIsDrawerOpen(false);
     setEditingUser(null);
     form.resetFields();
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (type) => {
     if (isSubmitting) {
       message.warning("A request is already in progress. Please wait.");
       return;
@@ -127,21 +137,31 @@ const UserTable = () => {
       const values = await form.validateFields();
       const token = localStorage.getItem("token");
       if (editingUser) {
-        await axios.put(`http://localhost:5000/api/userdata/${editingUser.user_id}`, values, {
+        if (type === "personal") {
+          await axios.put(`${API_URL}/userdata/${editingUser.user_id}`, values, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          message.success("Personal information updated successfully!");
+        } else {
+          await axios.put(`${API_URL}/userdata/${editingUser.user_id}`, {
+            address: values,
+          }, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          message.success("Address updated successfully!");
+        }
+        fetchUsers();
+      } else if (type === "add") {
+        await axios.post(`${API_URL}/user`, values, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        message.success("User updated successfully!");
-      } else {
-        await axios.post("http://localhost:5000/api/userdata", values, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        message.success("User added successfully!");
+        message.success("User created successfully!");
+        fetchUsers();
       }
-      fetchUsers();
-      handleCancel();
+      handleCancel(type);
     } catch (error) {
-      console.error("Error saving user:", error);
-      message.error("Failed to save user");
+      console.error("Error saving user: ", error);
+      message.error((error.response?.data?.error || "An error occurred"));
     } finally {
       setIsSubmitting(false);
     }
@@ -153,7 +173,7 @@ const UserTable = () => {
       onOk: async () => {
         try {
           const token = localStorage.getItem("token");
-          await axios.delete(`http://localhost:5000/api/userdata/${userId}`, {
+          await axios.delete(`${API_URL}/userdata/${userId}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           setUsers(users.filter((user) => user.user_id !== userId));
@@ -165,6 +185,11 @@ const UserTable = () => {
         }
       },
     });
+  };
+
+  const openDetailDrawer = (user) => {
+    setEditingUser(user);
+    setIsDrawerOpen(true);
   };
 
   const columns = [
@@ -221,7 +246,7 @@ const UserTable = () => {
           <Button
             type="text"
             icon={<EditOutlined />}
-            onClick={() => showModal(record)}
+            onClick={() => showModal("personal", record)}
             style={{ color: "#1890ff" }}
           />
           <Button
@@ -232,7 +257,7 @@ const UserTable = () => {
           />
           <Button
             type="text"
-            onClick={() => openDetailModal(record)}
+            onClick={() => openDetailDrawer(record)}
             style={{ color: "#1890ff" }}
           >
             View
@@ -273,7 +298,7 @@ const UserTable = () => {
               <Button
                 type="primary"
                 icon={<EditOutlined />}
-                onClick={() => showModal()}
+                onClick={() => showModal("add")}
                 disabled={isSubmitting}
                 style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
               >
@@ -310,137 +335,286 @@ const UserTable = () => {
         />
       </div>
 
-      {/* Modal thêm/sửa người dùng */}
       <Modal
-        title={editingUser ? "Edit User" : "Add User"}
-        open={isModalVisible}
-        onOk={handleSubmit}
-        onCancel={handleCancel}
-        okText={editingUser ? "Update" : "Add"}
-        cancelText="Cancel"
+        title={isModalVisible.personal ? "Edit Personal Information" : isModalVisible.add ? "Add User" : "Edit Address"}
+        open={isModalVisible.personal || isModalVisible.address || isModalVisible.add}
+        onOk={() => handleSubmit(isModalVisible.personal ? "personal" : isModalVisible.add ? "add" : "address")}
+        onCancel={() => handleCancel(isModalVisible.personal ? "personal" : isModalVisible.add ? "add" : "address")}
+        okText={isModalVisible.add ? "Add" : "Save Changes"}
+        cancelText="Close"
         okButtonProps={{ style: { backgroundColor: "#1890ff", borderColor: "#1890ff" }, disabled: isSubmitting }}
-        width={Math.min(window.innerWidth * 0.9, 520)}
+        width={700}
+        zIndex={10001}
       >
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="fullname"
-            label="Full Name"
-            rules={[{ required: true, message: "Please enter full name!" }]}
-          >
-            <Input placeholder="Enter full name" />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[{ required: true, type: "email", message: "Please enter a valid email!" }]}
-          >
-            <Input placeholder="Enter email" />
-          </Form.Item>
-          <Form.Item
-            name="role"
-            label="Role"
-            rules={[{ required: true, message: "Please select a role!" }]}
-          >
-            <Select>
-              <Select.Option value="user">User</Select.Option>
-              <Select.Option value="admin">Admin</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="phone" label="Phone">
-            <Input placeholder="Enter phone number" />
-          </Form.Item>
-          <Form.Item name="github_account" label="GitHub Account">
-            <Input placeholder="Enter GitHub username" />
-          </Form.Item>
+          <div className="flex flex-col">
+            <div className="overflow-y-auto max-h-[450px] px-2 pb-3">
+              {isModalVisible.add && (
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Name"
+                      name="name"
+                      rules={[{ required: true, message: "Please enter name!" }]}
+                    >
+                      <Input placeholder="Enter name" autoComplete="name" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Email Address"
+                      name="email"
+                      rules={[{ required: true, type: "email", message: "Please enter a valid email!" }]}
+                    >
+                      <Input placeholder="Enter email" autoComplete="email" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Password"
+                      name="password"
+                      rules={[
+                        { required: true, message: "Please enter password!" },
+                        {
+                          validator: (_, value) =>
+                            value && isPasswordStrong(value)
+                              ? Promise.resolve()
+                              : Promise.reject(
+                                  new Error(
+                                    "Password must be at least 8 characters long and include an uppercase letter, a lowercase letter, a number, and a special character."
+                                  )
+                                ),
+                        },
+                      ]}
+                    >
+                      <Input.Password placeholder="Enter password" autoComplete="new-password" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Role"
+                      name="role"
+                      rules={[{ required: true, message: "Please select a role!" }]}
+                    >
+                      <Select>
+                        <Select.Option value="user">User</Select.Option>
+                        <Select.Option value="admin">Admin</Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </div>
+                </div>
+              )}
+              {isModalVisible.personal && (
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Full Name"
+                      name="fullname"
+                      rules={[{ required: true, message: "Please enter full name!" }]}
+                    >
+                      <Input placeholder="Enter full name" autoComplete="name" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Email Address"
+                      name="email"
+                      rules={[{ required: true, type: "email", message: "Please enter a valid email!" }]}
+                    >
+                      <Input placeholder="Enter email" autoComplete="email" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Role"
+                      name="role"
+                      rules={[{ required: true, message: "Please select a role!" }]}
+                    >
+                      <Select>
+                        <Select.Option value="user">User</Select.Option>
+                        <Select.Option value="admin">Admin</Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="Phone" name="phone">
+                      <Input placeholder="Enter phone number" autoComplete="tel" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="Pronouns" name="pronouns">
+                      <Select style={{ width: "100%" }}>
+                        <Select.Option value="they/them">they/them</Select.Option>
+                        <Select.Option value="she/her">she/her</Select.Option>
+                        <Select.Option value="he/him">he/him</Select.Option>
+                        <Select.Option value="Don't specify">Don't specify</Select.Option>
+                      </Select>
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2">
+                    <Form.Item label="Bio" name="bio">
+                      <Input.TextArea placeholder="Enter a short bio" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="GitHub Account" name="github_account">
+                      <Input placeholder="Enter GitHub username" autoComplete="username" />
+                    </Form.Item>
+                  </div>
+                </div>
+              )}
+              {isModalVisible.address && (
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="Country" name="country">
+                      <Input placeholder="Enter country" autoComplete="country" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="City/State" name="cityState">
+                      <Input placeholder="Enter city/state" autoComplete="address-level2" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="Postal Code" name="postalCode">
+                      <Input placeholder="Enter postal code" autoComplete="postal-code" />
+                    </Form.Item>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </Form>
       </Modal>
 
-      {/* Modal xem chi tiết */}
-      <Modal
+      <Drawer
         title="User Details"
-        open={isDetailModalOpen}
-        onCancel={handleCancel}
-        footer={null}
-        width={Math.min(window.innerWidth * 0.9, 520)}
+        placement="right"
+        onClose={handleCancel}
+        open={isDrawerOpen}
+        width={Math.min(window.innerWidth * 0.9, 550)}
+        zIndex={10000}
+        footer={
+          <div className="flex justify-end">
+            <Button onClick={() => handleCancel("personal")} style={{ marginRight: 8 }}>
+              Close
+            </Button>
+          </div>
+        }
+        className="bg-white dark:bg-white/[0.03]"
       >
         {editingUser && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-2">
-              <p>
-                <strong>User ID:</strong> {editingUser.user_id}
-              </p>
-              <p>
-                <strong>Full Name:</strong> {editingUser.fullname || "-"}
-              </p>
-              <p>
-                <strong>Email:</strong> {editingUser.email || "-"}
-              </p>
-              <p>
-                <strong>Role:</strong>{" "}
-                <Badge size="small" color={editingUser.role === "admin" ? "success" : "primary"}>
-                  {editingUser.role || "-"}
-                </Badge>
-              </p>
-              <p>
-                <strong>Phone:</strong> {editingUser.phone || "-"}
-              </p>
-              <p>
-                <strong>Pronouns:</strong> {editingUser.pronouns || "-"}
-              </p>
-              <p>
-                <strong>Bio:</strong> {editingUser.bio || "-"}
-              </p>
-              <p>
-                <strong>GitHub:</strong> {editingUser.github_account || "-"}
-              </p>
-              <div>
-                <strong>Address:</strong>
-                {editingUser.address ? (
-                  <div className="ml-4">
-                    <p>
-                      <strong>Country:</strong> {editingUser.address.country || "-"}
+          <div className="space-y-5">
+            <div className="mb-4">
+              <div className="flex items-center space-x-4 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p onClick={handleAvatarClick} className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    style={{ display: "none" }}
+                  />
+                  {editingUser.avatar ? (
+                    <img src={editingUser.avatar} alt="Avatar" className="w-28 h-28 rounded-full" />
+                  ) : (
+                    <div className="w-28 h-28 rounded-full bg-brand-600 flex items-center justify-center text-white text-[38px] font-medium">
+                      {getInitial(editingUser.fullname)}
+                    </div>
+                  )}
+                </p>
+                <div>
+                  <p className="text-lg font-medium mb-2">
+                    {editingUser.fullname || "N/A"}
+                  </p>
+                  <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {editingUser.role ? "Role: " + editingUser.role : "Role"}
                     </p>
-                    <p>
-                      <strong>City/State:</strong> {editingUser.address.cityState || "-"}
-                    </p>
-                    <p>
-                      <strong>Postal Code:</strong> {editingUser.address.postalCode || "-"}
+                    <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {editingUser.bio ? "Bio: " + editingUser.bio : "Bio"}
                     </p>
                   </div>
-                ) : (
-                  " -"
-                )}
+                </div>
               </div>
-              <p>
-                <strong>Avatar:</strong>{" "}
-                {editingUser.avatar ? (
-                  <a href={editingUser.avatar} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                    View Avatar
-                  </a>
-                ) : (
-                  "-"
-                )}
-              </p>
-              {/* <p>
-                <strong>Avatar:</strong>{" "}
-                {editingUser.avatar ? (
-                  <img src={editingUser.avatar} alt="Avatar" className="w-16 h-16 object-cover rounded" />
-                ) : (
-                  "-"
-                )}
-              </p> */}
-              <p>
-                <strong>Created At:</strong>{" "}
-                {editingUser.createdAt ? new Date(editingUser.createdAt).toLocaleString() : "-"}
-              </p>
-              <p>
-                <strong>Updated At:</strong>{" "}
-                {editingUser.updatedAt ? new Date(editingUser.updatedAt).toLocaleString() : "-"}
-              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Personal Information</h3>
+                <button
+                  onClick={() => showModal("personal", editingUser)}
+                  className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.3] dark:hover:text-gray-200"
+                >
+                  <svg
+                    className="fill-current"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M15.0911 2.78206C14.2125 1.90338 12.7878 1.90338 11.9092 2.78206L4.57504 10.106C4.26662 10.4144 4.0545 10.8058 3.96448 11.2326L3.31211 14.3251C3.25974 14.5732 3.33633 14.8309 3.51562 15.0102C3.69492 15.1895 3.95266 15.266 4.20076 15.2137L7.29335 14.5613C7.72011 14.4713 8.11152 14.2592 8.4199 13.9508L15.7539 6.61682C16.6325 5.73814 16.6325 4.31352 15.7539 3.4348L15.0911 2.78206ZM12.9698 3.84272C13.2627 3.54982 13.7376 3.54982 14.0305 3.84272L14.6934 4.50563C14.9863 4.79852 14.9863 5.2734 14.6934 5.56629L14.044 6.21573L12.3204 4.49215L12.9698 3.84272ZM11.2597 5.55281L5.6357 11.1766C5.53289 11.2794 5.46218 11.4099 5.43218 11.5522L5.01738 13.5185L6.98374 13.1037C7.126 13.0737 7.25646 13.003 7.35927 12.9002L12.9831 7.27639L11.2597 5.55281Z"
+                      fill=""
+                    />
+                  </svg>
+                  Edit
+                </button>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Full Name:</strong> {editingUser.fullname || "-"}</p>
+                <p><strong>Email:</strong> {editingUser.email || "-"}</p>
+                <p><strong>Role:</strong> <Badge size="small" color={editingUser.role === "admin" ? "success" : "primary"}>{editingUser.role || "-"}</Badge></p>
+                <p><strong>Phone:</strong> {editingUser.phone || "-"}</p>
+                <p><strong>Pronouns:</strong> {editingUser.pronouns || "-"}</p>
+                <p><strong>Bio:</strong> {editingUser.bio || "-"}</p>
+                <p><strong>GitHub:</strong> {editingUser.github_account || "-"}</p>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Address</h3>
+                <button
+                  onClick={() => showModal("address", editingUser)}
+                  className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.3] dark:hover:text-gray-200"
+                >
+                  <svg
+                    className="fill-current"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M15.0911 2.78206C14.2125 1.90338 12.7878 1.90338 11.9092 2.78206L4.57504 10.106C4.26662 10.4144 4.0545 10.8058 3.96448 11.2326L3.31211 14.3251C3.25974 14.5732 3.33633 14.8309 3.51562 15.0102C3.69492 15.1895 3.95266 15.266 4.20076 15.2137L7.29335 14.5613C7.72011 14.4713 8.11152 14.2592 8.4199 13.9508L15.7539 6.61682C16.6325 5.73814 16.6325 4.31352 15.7539 3.4348L15.0911 2.78206ZM12.9698 3.84272C13.2627 3.54982 13.7376 3.54982 14.0305 3.84272L14.6934 4.50563C14.9863 4.79852 14.9863 5.2734 14.6934 5.56629L14.044 6.21573L12.3204 4.49215L12.9698 3.84272ZM11.2597 5.55281L5.6357 11.1766C5.53289 11.2794 5.46218 11.4099 5.43218 11.5522L5.01738 13.5185L6.98374 13.1037C7.126 13.0737 7.25646 13.003 7.35927 12.9002L12.9831 7.27639L11.2597 5.55281Z"
+                      fill=""
+                    />
+                  </svg>
+                  Edit
+                </button>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                {editingUser.address ? (
+                  <>
+                    <p><strong>Country:</strong> {editingUser.address.country || "-"}</p>
+                    <p><strong>City/State:</strong> {editingUser.address.cityState || "-"}</p>
+                    <p><strong>Postal Code:</strong> {editingUser.address.postalCode || "-"}</p>
+                  </>
+                ) : " -"}
+              </div>
             </div>
           </div>
         )}
-      </Modal>
+      </Drawer>
     </div>
   );
 };

@@ -312,7 +312,7 @@ const NotificationTable = () => {
         {selectedCommit && (
           <div className="space-y-4">
             <div className="mb-4">
-              <div className="flex items-center space-x-4 mt-2">
+              <div className="flex items-center space-x-4">
                 <img
                   src={selectedCommit.author.avatar_url}
                   alt="Author Avatar"

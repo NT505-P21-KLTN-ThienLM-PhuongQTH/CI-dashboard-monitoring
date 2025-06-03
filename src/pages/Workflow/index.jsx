@@ -455,9 +455,8 @@ export default function Workflows() {
         >
           {selectedWorkflowDetails && (
             <div className="space-y-4">
-              <p><strong>ID:</strong> {selectedWorkflowDetails.id}</p>
-              <p><strong>GitHub ID:</strong> {selectedWorkflowDetails.github_workflow_id}</p>
               <p><strong>Name:</strong> {selectedWorkflowDetails.name}</p>
+              <p><strong>GitHub Workflow ID:</strong> {selectedWorkflowDetails.github_workflow_id}</p>
               <p><strong>Path:</strong> {selectedWorkflowDetails.path || "N/A"}</p>
               <p><strong>State:</strong>{" "}
                 <Badge

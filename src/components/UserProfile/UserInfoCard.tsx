@@ -36,7 +36,6 @@ export default function UserInfoCard({ userData }) {
       });
       if (!response.ok) throw new Error("Failed to update user data");
 
-      // Cập nhật bảng users nếu cần (tùy thuộc backend)
       if (formData.email && formData.email !== user?.email) {
         await fetch(`${import.meta.env.VITE_APP_API_URL}/users/${userData.user_id}`, {
           method: "PUT",
