@@ -3,6 +3,7 @@ import { Select, Input, Button, Table, message, Space, Switch, Modal } from "ant
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import Badge from "../ui/badge/Badge";
+import axios from "axios";
 
 const { Option } = Select;
 const { confirm } = Modal;
@@ -15,6 +16,8 @@ export default function WebhookSettingsCard({ repos, userId }) {
   const [configuredWebhooks, setConfiguredWebhooks] = useState([]);
   const [showSecret, setShowSecret] = useState({});
 
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
   const fetchConfiguredWebhooks = async () => {
     if (!userId) {
       console.warn("No user_id found in repos");
@@ -25,10 +28,11 @@ export default function WebhookSettingsCard({ repos, userId }) {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/webhooks/list?user_id=${userId}`, {
+      const response = await axios.get(`${API_URL}/webhooks/list`, {
+        params: { user_id: userId },
         headers: { Authorization: `Bearer ${token}` }
       });
-      const data = await response.json();
+      const data = response.data;
       if (Array.isArray(data)) {
         setConfiguredWebhooks(data);
       } else {
@@ -56,11 +60,12 @@ export default function WebhookSettingsCard({ repos, userId }) {
     const checkWebhook = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:5000/api/webhooks/check?repo_id=${selectedRepo}`, {
+        const response = await axios.get(`${API_URL}/webhooks/check`, {
+          params: { repo_id: selectedRepo },
           headers: { Authorization: `Bearer ${token}` }
         });
-        const data = await response.json();
-        if (response.ok) {
+        const data = response.data;
+        if (response.status === 200) {
           if (data.exists) {
             setWebhookExists(true);
           } else {
@@ -94,29 +99,26 @@ export default function WebhookSettingsCard({ repos, userId }) {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/webhooks/configure", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${API_URL}/webhooks/configure`,
+        {
           repo_id: selectedRepo,
           webhook_secret: webhookSecret,
           active: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to configure webhook");
-      }
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
       message.success("Webhook configured successfully");
       setWebhookExists(true);
       await fetchConfiguredWebhooks();
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
       await fetchConfiguredWebhooks();
     }
   };
@@ -137,28 +139,25 @@ export default function WebhookSettingsCard({ repos, userId }) {
   const handleUpdateWebhook = async (repoId, newSecret) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/webhooks/update", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
+      await axios.post(
+        `${API_URL}/webhooks/update`,
+        {
           repo_id: repoId,
           webhook_secret: newSecret || undefined,
           active: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update webhook");
-      }
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
       message.success("Webhook updated successfully");
       await fetchConfiguredWebhooks();
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
       await fetchConfiguredWebhooks();
     }
   };
@@ -179,18 +178,16 @@ export default function WebhookSettingsCard({ repos, userId }) {
   const handleDeleteWebhook = async (repoId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/webhooks/delete", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({ repo_id: repoId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete webhook");
-      }
+      await axios.post(
+        `${API_URL}/webhooks/delete`,
+        { repo_id: repoId },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
       message.success("Webhook deleted successfully");
       setWebhookExists(false);
@@ -201,38 +198,45 @@ export default function WebhookSettingsCard({ repos, userId }) {
       }
       await fetchConfiguredWebhooks();
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
       await fetchConfiguredWebhooks();
     }
   };
 
-  const handleToggleWebhook = async (repoId) => {
-    const webhook = configuredWebhooks.find((w) => w.repo_id === repoId);
-    const newActive = !webhook.active;
+  const showManualSyncConfirm = () => {
+    confirm({
+      title: "Are you sure you want to manually sync this repository?",
+      content: "This will trigger a sync process. Please wait for the repository status to change to 'Success' to confirm completion.",
+      okText: "Yes",
+      okType: "primary",
+      cancelText: "No",
+      onOk() {
+        handleManualSync();
+      },
+    });
+  };
+
+  const handleManualSync = async () => {
+    if (!selectedRepo) {
+      message.error("Please select a repository");
+      return;
+    }
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/webhooks/update", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          repo_id: repoId,
-          active: newActive,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to toggle webhook");
-      }
-
-      message.success(`Webhook ${newActive ? "enabled" : "disabled"} successfully`);
-      await fetchConfiguredWebhooks();
+      await axios.post(
+        `${API_URL}/webhooks/trigger-sync`,
+        { repo_id: selectedRepo },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      message.success("Sync triggered. Please wait for the repository status to change to 'Success'.");
     } catch (error) {
-      message.error(error.message);
-      await fetchConfiguredWebhooks();
+      message.error(error.response?.data?.error || "Failed to trigger sync");
     }
   };
 
@@ -297,7 +301,7 @@ export default function WebhookSettingsCard({ repos, userId }) {
       render: (text) => (
         <div style={{ textAlign: 'center' }}>
             <Badge
-                size="small" // Sử dụng size="small" thay vì "sm" vì Ant Design không có size "sm"
+                size="small"
                 color={
                 text === 'Configured'
                     ? 'success'
@@ -445,6 +449,17 @@ export default function WebhookSettingsCard({ repos, userId }) {
               minWidth: '100%',
             }}
           />
+          <div className="mt-4">
+            <h4 className="text-lg font-medium text-gray-700 dark:text-gray-300">
+              Manual Sync
+            </h4>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">
+              Click the button below to trigger a manual sync for the selected repository.
+            </p>
+            <Button type="primary" onClick={showManualSyncConfirm} disabled={!selectedRepo}>
+              Trigger Manual Sync
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -6,6 +6,7 @@ import UserAddressCard from "../../components/UserProfile/UserAddressCard";
 import WebhookSettingsCard from "../../components/UserProfile/WebhookSettingsCard";
 import PageMeta from "../../components/common/PageMeta";
 import { UserContext } from "../../contexts/UserContext";
+import axios from "axios";
 
 export default function AccountSettings() {
   const { user } = useContext(UserContext);
@@ -16,6 +17,8 @@ export default function AccountSettings() {
 
   const userId = user?.id || null;
 
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
   useEffect(() => {
     if (!userId) {
       setLoading(false);
@@ -25,42 +28,36 @@ export default function AccountSettings() {
 
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token"); // Lấy token từ localStorage
+        const token = localStorage.getItem("token");
         if (!token) {
           setError("No authentication token found. Please log in.");
           setLoading(false);
           return;
         }
 
-        // Gọi API user data với token
-        const userDataResponse = await fetch(`http://localhost:5000/api/userdata/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // Thêm token vào header
-          },
-        });
-        if (!userDataResponse.ok) {
-          console.error("Error fetching user data:", userDataResponse.statusText);
-          throw new Error(`Failed to fetch user data: ${userDataResponse.statusText}`);
-        }
-        const userData = await userDataResponse.json();
-        setUserData(userData);
+        const userDataResponse = await axios.get(
+          `${API_URL}/userdata/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUserData(userDataResponse.data);
 
-        // Gọi API repos với token
-        const reposResponse = await fetch(`http://localhost:5000/api/repos?user_id=${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`, // Thêm token vào header
-          },
-        });
-        if (!reposResponse.ok) {
-          console.error("Error fetching repos:", reposResponse.statusText);
-          throw new Error(`Failed to fetch repos: ${reposResponse.statusText}`);
-        }
-        const reposData = await reposResponse.json();
-        setRepos(reposData);
+        const reposResponse = await axios.get(
+          `${API_URL}/repos?user_id=${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setRepos(reposResponse.data);
 
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || err.message);
         setLoading(false);
       }
     };
@@ -93,7 +90,7 @@ export default function AccountSettings() {
           <UserAddressCard userData={userData} />
         </div>
       </div>
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6 mb-6">
         <div className="flex flex-col gap-2 mb-6">
           <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90">
             Webhook Settings

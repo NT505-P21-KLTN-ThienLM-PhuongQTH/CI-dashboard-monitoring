@@ -136,14 +136,13 @@ const othersItems = [
 
 const AppSidebar = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
-  const { user } = useContext(UserContext);
+  const { user, logout } = useContext(UserContext);
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [subMenuHeight, setSubMenuHeight] = useState({});
   const subMenuRefs = useRef({});
 
-  // Sử dụng useMemo để tránh tính toán lại filteredNavItems trừ khi user?.role thay đổi
   const filteredNavItems = useMemo(() => {
     return navItems.filter((item) => {
       if (item.requiresAdmin) {
@@ -158,7 +157,6 @@ const AppSidebar = () => {
     [location.pathname]
   );
 
-  // Tự động mở submenu dựa trên URL hiện tại
   useEffect(() => {
     let submenuMatched = false;
     let newOpenSubmenu = null;
@@ -177,7 +175,6 @@ const AppSidebar = () => {
       });
     });
 
-    // Chỉ cập nhật trạng thái nếu openSubmenu thay đổi
     if (submenuMatched) {
       if (
         !openSubmenu ||
@@ -254,25 +251,47 @@ const AppSidebar = () => {
             </button>
           ) : (
             nav.path && (
-              <Link
-                to={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                }`}
-              >
-                <span
-                  className={`menu-item-icon-size ${
-                    isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+              nav.name === "Logout" ? (
+                <button
+                  onClick={() => logout()}
+                  className={`menu-item group ${
+                    isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                   }`}
                 >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">{nav.name}</span>
-                )}
-              </Link>
+                  <span
+                    className={`menu-item-icon-size ${
+                      isActive(nav.path)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                    }`}
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="menu-item-text">{nav.name}</span>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to={nav.path}
+                  className={`menu-item group ${
+                    isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                  }`}
+                >
+                  <span
+                    className={`menu-item-icon-size ${
+                      isActive(nav.path)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                    }`}
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="menu-item-text">{nav.name}</span>
+                  )}
+                </Link>
+              )
             )
           )}
           {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
@@ -297,7 +316,7 @@ const AppSidebar = () => {
                         isActive(subItem.path)
                           ? "menu-dropdown-item-active"
                           : "menu-dropdown-item-inactive"
-                        }`}
+                      }`}
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">

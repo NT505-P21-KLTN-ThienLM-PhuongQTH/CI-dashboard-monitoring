@@ -1,6 +1,6 @@
 // UserInfoCard.tsx
 import React, { useState, useContext } from "react";
-import { Modal, Button as AntButton, Input as AntInput, Select } from "antd";
+import { Modal, Button as AntButton, Input as AntInput, Select, Form, Input } from "antd";
 import { UserContext } from "../../contexts/UserContext";
 const { Option } = Select;
 
@@ -152,73 +152,61 @@ export default function UserInfoCard({ userData }) {
         okText="Save Changes"
         cancelText="Close"
       >
-        <div className="flex flex-col">
-          <div className="overflow-y-auto max-h-[450px] px-2 pb-3">
-            <div>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                <div className="col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Full Name
-                  </label>
-                  <AntInput
-                    name="fullname"
-                    value={formData.fullname}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div className="col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email Address
-                  </label>
-                  <AntInput
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter your email"
-                  />
-                </div>
-                <div className="col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Phone
-                  </label>
-                  <AntInput
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-                <div className="col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Pronouns
-                  </label>
-                  <Select
-                    value={formData.pronouns}
-                    onChange={handlePronounChange}
-                    style={{ width: "100%" }}
-                  >
-                    <Option value="they/them">they/them</Option>
-                    <Option value="she/her">she/her</Option>
-                    <Option value="he/him">he/him</Option>
-                    <Option value="Don't specify">Don't specify</Option>
-                  </Select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Bio
-                  </label>
-                  <AntInput
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    placeholder="Enter a short bio"
-                  />
+        <Form
+          layout="vertical"
+          initialValues={formData}
+          onValuesChange={(changedValues, allValues) => {
+            handleChange({ target: { name: Object.keys(changedValues)[0], value: changedValues[Object.keys(changedValues)[0]] } });
+          }}
+          onFinish={handleOk}
+        >
+          <div className="flex flex-col">
+            <div className="overflow-y-auto max-h-[450px] px-2 pb-3">
+              <div>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-1 lg:grid-cols-2">
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Full Name"
+                      name="fullname"
+                      rules={[{ required: true, message: "Please enter your full name!" }]}
+                    >
+                      <Input placeholder="Enter your full name" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item
+                      label="Email Address"
+                      name="email"
+                      rules={[{ required: true, type: "email", message: "Please enter a valid email!" }]}
+                    >
+                      <Input placeholder="Enter your email" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="Phone" name="phone">
+                      <Input placeholder="Enter your phone number" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2 lg:col-span-1">
+                    <Form.Item label="Pronouns" name="pronouns">
+                      <Select style={{ width: "100%" }}>
+                        <Option value="they/them">they/them</Option>
+                        <Option value="she/her">she/her</Option>
+                        <Option value="he/him">he/him</Option>
+                        <Option value="Don't specify">Don't specify</Option>
+                      </Select>
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2">
+                    <Form.Item label="Bio" name="bio">
+                      <Input placeholder="Enter a short bio" />
+                    </Form.Item>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Form>
       </Modal>
     </div>
   );
