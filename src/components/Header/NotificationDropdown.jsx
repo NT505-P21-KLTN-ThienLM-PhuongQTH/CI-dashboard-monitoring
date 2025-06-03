@@ -278,13 +278,26 @@ export default function NotificationDropdown() {
       >
         {selectedCommit && (
           <div className="space-y-4">
-            {/* <p>
-              <strong>Commit ID:</strong> {selectedCommit.id || '-'}
-            </p>
-            <p>
-              <strong>Workflow Run ID:</strong>{' '}
-              {selectedCommit.workflow_run_id || '-'}
-            </p> */}
+            <div className="mb-4">
+              <div className="flex items-center space-x-4 mt-2">
+                <img
+                  src={selectedCommit.author.avatar_url}
+                  alt="Author Avatar"
+                  className="w-12 h-12 rounded-full border"
+                />
+                <p className="text-md">
+                  <strong>Author:</strong>{" "}
+                  <a
+                    href={selectedCommit.author.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline text-md"
+                  >
+                    {selectedCommit.author.login}
+                  </a>
+                </p>
+              </div>
+            </div>
             <p>
               <strong>SHA:</strong> {selectedCommit.sha || "-"}
             </p>
@@ -294,33 +307,6 @@ export default function NotificationDropdown() {
                 {selectedCommit.commit.message || "-"}
               </Badge>
             </p>
-            <div>
-              <strong>Author Details:</strong>
-              <div className="ml-4">
-                <p>
-                  <strong>Login:</strong>{" "}
-                  <a
-                    href={selectedCommit.author.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    {selectedCommit.author.login}
-                  </a>
-                </p>
-                <p>
-                  <strong>Avatar URL:</strong>{" "}
-                  <a
-                    href={selectedCommit.author.avatar_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    View Avatar
-                  </a>
-                </p>
-              </div>
-            </div>
             <div>
               <strong>Commit Author:</strong>
               <div className="ml-4">

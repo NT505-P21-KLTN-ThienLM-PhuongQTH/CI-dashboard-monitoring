@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Space, Input } from "antd";
+import { Table, Button, Space, Input, Drawer } from "antd";
 import axios from "axios";
 import Badge from "../ui/badge/Badge";
 
@@ -10,9 +10,9 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedRun, setSelectedRun] = useState(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedWorkflowRun, setSelectedWorkflowRun] = useState(null);
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -27,6 +27,7 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
         params: {
           workflow_id: workflowId,
           branch: selectedBranch,
+          ...filters,
         },
       });
       setRuns(response.data.runs);
@@ -46,8 +47,8 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setSelectedRun(response.data);
-      setIsDetailModalOpen(true);
+      setSelectedWorkflowRun(response.data);
+      setIsDrawerOpen(true);
     } catch (error) {
       console.error("Error fetching run details:", error);
     }
@@ -61,7 +62,7 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
 
   const handleSearch = (value) => {
     setSearchText(value);
-    fetchWorkflowRuns(1, { search: value }); // Gửi search text như query param
+    fetchWorkflowRuns(1, { search: value });
   };
 
   const filteredRuns = runs.filter((run) =>
@@ -116,12 +117,6 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
       key: "head_sha",
       width: 100,
       render: (text) => (
-        // <span
-        //   className="whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]"
-        //   title={text}
-        // >
-        //   {text || "-"}
-        // </span>
         <span className="overflow-hidden text-ellipsis whitespace-nowrap w-full block" style={{ maxWidth: '100px' }}>
           {text.substring(0, 7)}
         </span>
@@ -204,7 +199,7 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
       onFilter: (value, record) => record.status === value,
       render: (status) => (
         <div style={{ textAlign: 'center' }}>
-        <Badge
+          <Badge
             size="small"
             color={
               status === "completed"
@@ -215,7 +210,7 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
             }
           >
             {status || "-"}
-        </Badge>
+          </Badge>
         </div>
       ),
     },
@@ -252,6 +247,11 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
     },
   ];
 
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+    setSelectedWorkflowRun(null);
+  };
+
   return (
     <div>
       {title && (
@@ -286,160 +286,93 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
         scroll={{ x: 1200 }}
       />
 
-      <Modal
-        title="Run Details"
-        open={isDetailModalOpen}
-        onCancel={() => setIsDetailModalOpen(false)}
-        footer={null}
+      <Drawer
+        title="Workflow Run Details"
+        placement="right"
+        onClose={handleDrawerClose}
+        open={isDrawerOpen}
+        width={Math.min(window.innerWidth * 0.9, 550)}
+        zIndex={10000}
+        footer={
+          <div className="flex justify-end">
+            <Button onClick={handleDrawerClose} style={{ marginRight: 8 }}>
+              Close
+            </Button>
+          </div>
+        }
+        className="bg-white dark:bg-white/[0.03]"
       >
-        {selectedRun && (
-          <div className="space-y-4">
-            {/* <p>
-              <strong>ID:</strong> {selectedRun._id}
-            </p> */}
-            <p>
-              <strong>GitHub Run ID:</strong> {selectedRun.github_run_id}
-            </p>
-            <p>
-              <strong>Branch:</strong> {selectedRun.head_branch}
-            </p>
-            <div>
-              <strong>Actor:</strong>
-              {selectedRun.actor && (
-                <div className="ml-4">
-                  <p>
-                    <strong>Login:</strong>{" "}
+        {selectedWorkflowRun && (
+          <div className="space-y-5">
+            {/* Triggering Actor */}
+            {selectedWorkflowRun.triggering_actor && (
+              <div className="mb-4">
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={selectedWorkflowRun.triggering_actor.avatar_url}
+                    alt={selectedWorkflowRun.triggering_actor.login}
+                    className="w-28 h-28 rounded-md"
+                  />
+                  <div>
+                    <p className="text-lg font-semibold">
+                      Triggered by: {selectedWorkflowRun.triggering_actor.login}
+                    </p>
                     <a
-                      href={selectedRun.actor.html_url}
+                      href={selectedWorkflowRun.triggering_actor.html_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:underline"
                     >
-                      {selectedRun.actor.login}
+                      View Profile
                     </a>
-                  </p>
-                  <p>
-                    <strong>Avatar URL:</strong>{" "}
-                    <a
-                      href={selectedRun.actor.avatar_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      View Avatar
-                    </a>
-                  </p>
+                  </div>
                 </div>
-              )}
-            </div>
-            <p>
-              <strong>Conclusion:</strong>{" "}
-              <Badge
-                size="small"
-                color={
-                  selectedRun.conclusion === "success"
-                    ? "success"
-                    : selectedRun.conclusion === "failure"
-                    ? "error"
-                    : "warning"
-                }
-              >
-                {selectedRun.conclusion || "-"}
-              </Badge>
-            </p>
-            <p>
-              <strong>Status:</strong>{" "}
-              <Badge
-                size="small"
-                color={
-                  selectedRun.status === "completed"
-                    ? "success"
-                    : selectedRun.status === "in_progress"
-                    ? "warning"
-                    : "error"
-                }
-              >
-                {selectedRun.status || "-"}
-              </Badge>
-            </p>
-            <p>
-              <strong>Event:</strong> {selectedRun.event || "-"}
-            </p>
-            <p>
-              <strong>Head SHA:</strong> {selectedRun.head_sha || "-"}
-            </p>
-            <p><strong>Display Title:</strong> {selectedRun.display_title || "-"}</p>
-            <p>
-              <strong>Run Number:</strong> {selectedRun.run_number || "-"}
-            </p>
-            <p>
-              <strong>Run Attempt:</strong> {selectedRun.run_attempt || "-"}
-            </p>
-            <p>
-              <strong>Created At:</strong>{" "}
-              {selectedRun.created_at
-                ? new Date(selectedRun.created_at).toLocaleString()
-                : "-"}
-            </p>
-            <p>
-              <strong>Run Started At:</strong>{" "}
-              {selectedRun.run_started_at
-                ? new Date(selectedRun.run_started_at).toLocaleString()
-                : "-"}
-            </p>
-            <p>
-              <strong>Updated At:</strong>{" "}
-              {selectedRun.updated_at
-                ? new Date(selectedRun.updated_at).toLocaleString()
-                : "-"}
-            </p>
-            <p>
-              <strong>URL:</strong>{" "}
-              {selectedRun.html_url ? (
-                <a
-                  href={selectedRun.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  View on GitHub
-                </a>
-              ) : (
-                "-"
-              )}
-            </p>
+              </div>
+            )}
+
+            <hr className="block text-sm font-sm text-gray-200 dark:text-gray-800" />
+
+            {/* Pipeline Overview */}
             <div>
-              <strong>Triggering Actor:</strong>
-              {selectedRun.triggering_actor && (
-                <div className="ml-4">
-                  <p>
-                    <strong>Login:</strong>{" "}
-                    <a
-                      href={selectedRun.triggering_actor.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {selectedRun.triggering_actor.login}
-                    </a>
-                  </p>
-                  <p>
-                    <strong>Avatar URL:</strong>{" "}
-                    <a
-                      href={selectedRun.triggering_actor.avatar_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      View Avatar
-                    </a>
-                  </p>
-                </div>
-              )}
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pipeline Overview</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Name:</strong> {selectedWorkflowRun.name || '-'}</p>
+                <p><strong>Display Title:</strong> <Badge size="small" color="primary">{selectedWorkflowRun.display_title || '-'}</Badge></p>
+                <p><strong>GitHub Run ID:</strong> {selectedWorkflowRun.github_run_id?.toString() || '-'}</p>
+                <p><strong>GitHub Workflow ID:</strong> {selectedWorkflowRun.github_workflow_id?.toString() || '-'}</p>
+                <p><strong>Run Number:</strong> {selectedWorkflowRun.run_number?.toString() || '-'}</p>
+                <p><strong>Run Attempt:</strong> {selectedWorkflowRun.run_attempt?.toString() || '-'}</p>
+                <p><strong>Path:</strong> {selectedWorkflowRun.path || '-'}</p>
+                <p><strong>Event:</strong> {selectedWorkflowRun.event || '-'}</p>
+              </div>
             </div>
+
+            {/* Execution Details */}
+            <div>
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Execution Details</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Head Branch:</strong> {selectedWorkflowRun.head_branch || '-'}</p>
+                <p><strong>Head SHA:</strong> {selectedWorkflowRun.head_sha || '-'}</p>
+                <p><strong>Status:</strong> <Badge size="small" color={selectedWorkflowRun.status === 'completed' ? 'success' : 'warning'}>{selectedWorkflowRun.status || '-'}</Badge></p>
+                <p><strong>Conclusion:</strong> <Badge size="small" color={selectedWorkflowRun.conclusion === 'success' ? 'success' : selectedWorkflowRun.conclusion === 'failure' ? 'error' : 'warning'}>{selectedWorkflowRun.conclusion || '-'}</Badge></p>
+                <p><strong>Run Started At:</strong> {selectedWorkflowRun.run_started_at ? new Date(selectedWorkflowRun.run_started_at).toLocaleString() : '-'}</p>
+                <p><strong>Updated At:</strong> {selectedWorkflowRun.updated_at ? new Date(selectedWorkflowRun.updated_at).toLocaleString() : '-'}</p>
+              </div>
+            </div>
+
+            {/* Timeline & Links */}
+            <div>
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timeline & Links</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Created At:</strong> {selectedWorkflowRun.created_at ? new Date(selectedWorkflowRun.created_at).toLocaleString() : '-'}</p>
+                <p><strong>Run Started At:</strong> {selectedWorkflowRun.run_started_at ? new Date(selectedWorkflowRun.run_started_at).toLocaleString() : '-'}</p>
+                <p><strong>URL:</strong> {selectedWorkflowRun.html_url ? <a href={selectedWorkflowRun.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View in GitHub</a> : '-'}</p>
+              </div>
+            </div>
+
           </div>
         )}
-      </Modal>
+      </Drawer>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Table, Button, Modal, Form, Input, message, Space, Select, Spin, Row, Col } from 'antd';
+import { Table, Button, Form, Input, message, Space, Select, Spin, Row, Col, Modal, Drawer } from 'antd';
 import { EditOutlined, DeleteOutlined, ReloadOutlined, RedoOutlined } from '@ant-design/icons';
 import { UserContext } from '../../contexts/UserContext';
 import Badge from "../ui/badge/Badge";
@@ -23,12 +23,12 @@ const useWindowSize = () => {
   return windowSize;
 };
 
+// Khối State và Hook
 const RepositoryTable = () => {
   const { user } = useContext(UserContext);
   const [repos, setRepos] = useState([]);
   const [filteredRepos, setFilteredRepos] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false); // Thêm lại dòng này
   const [form] = Form.useForm();
   const [editingRepo, setEditingRepo] = useState(null);
   const [selectedRepoData, setSelectedRepoData] = useState(null);
@@ -38,9 +38,11 @@ const RepositoryTable = () => {
   const [processing, setProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { width } = useWindowSize();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
+// Khối Fetch Data
   const fetchRepos = async () => {
     setLoading(true);
     try {
@@ -70,11 +72,6 @@ const RepositoryTable = () => {
     }
   };
 
-  useEffect(() => {
-    fetchRepos();
-  }, [user.id]);
-
-  // Hàm lấy thông tin chi tiết RepoData
   const fetchRepoData = async (repoId) => {
     try {
       const token = localStorage.getItem("token");
@@ -89,12 +86,17 @@ const RepositoryTable = () => {
       }
       const data = await response.json();
       setSelectedRepoData(data);
-      setIsDetailModalOpen(true);
+      setIsDrawerOpen(true); // Mở Drawer thay vì Modal
     } catch (error) {
       message.error(error.message);
     }
   };
 
+  useEffect(() => {
+    fetchRepos();
+  }, [user.id]);
+
+// Khối Xử lý Filter và Sort
   const applyFiltersAndSort = (data, search, status) => {
     let filteredData = [...data];
 
@@ -124,6 +126,7 @@ const RepositoryTable = () => {
     applyFiltersAndSort(repos, searchText, value);
   };
 
+// Khối Xử lý Modal và Form
   const showModal = (repo = null) => {
     setEditingRepo(repo);
     if (repo) {
@@ -139,7 +142,7 @@ const RepositoryTable = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setIsDetailModalOpen(false); // Đóng cả modal chi tiết
+    setIsDrawerOpen(false); // Đóng Drawer
     setEditingRepo(null);
     setSelectedRepoData(null); // Xóa dữ liệu chi tiết
     form.resetFields();
@@ -293,6 +296,7 @@ const RepositoryTable = () => {
     });
   };
 
+// Khối Cấu hình Table
   const columns = [
     {
       title: 'Full Name',
@@ -387,6 +391,7 @@ const RepositoryTable = () => {
     },
   ].filter((col) => !col.hidden);
 
+// Khối Render UI
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
@@ -502,119 +507,101 @@ const RepositoryTable = () => {
         </Form>
       </Modal>
 
-      {/* Modal xem chi tiết RepoData */}
-      <Modal
+      <Drawer
         title="Repository Details"
-        open={isDetailModalOpen}
-        onCancel={handleCancel}
-        footer={null}
-        width={Math.min(window.innerWidth * 0.9, 520)}
+        placement="right"
+        onClose={handleCancel}
+        open={isDrawerOpen}
+        width={Math.min(window.innerWidth * 0.9, 550)}
+        zIndex={10000}
+        footer={
+          <div className="flex justify-end">
+            <Button onClick={handleCancel} style={{ marginRight: 8 }}>
+              Close
+            </Button>
+          </div>
+        }
+        className="bg-white dark:bg-white/[0.03]"
       >
         {selectedRepoData && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-2">
-              <p>
-                <strong>Repo ID:</strong> {selectedRepoData.repo_id?.toString() || "-"}
-              </p>
-              <p>
-                <strong>GitHub Repo ID:</strong> {selectedRepoData.github_repo_id || "-"}
-              </p>
-              <p>
-                <strong>Full Name:</strong> {selectedRepoData.full_name || "-"}
-              </p>
-              <p>
-                <strong>Name:</strong> {selectedRepoData.name || "-"}
-              </p>
-              <p>
-                <strong>URL:</strong>{" "}
-                {selectedRepoData.html_url ? (
-                  <a href={selectedRepoData.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                    {selectedRepoData.html_url}
-                  </a>
-                ) : "-"}
-              </p>
-              <div>
-                <strong>Owner:</strong>
-                {selectedRepoData.owner ? (
-                  <div className="ml-4">
-                    <p>
-                      <strong>ID:</strong> {selectedRepoData.owner.id || "-"}
+          <div className="space-y-5">
+            {selectedRepoData.owner && (
+              <div className="mb-4">
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={selectedRepoData.owner.avatar_url}
+                    alt={selectedRepoData.owner.login}
+                    className="w-28 h-28 rounded-md"
+                  />
+                  <div>
+                    <p className="text-lg font-semibold">
+                      Owner: {selectedRepoData.owner.login}
                     </p>
-                    <p>
-                      <strong>Login:</strong> {selectedRepoData.owner.login || "-"}
-                    </p>
-                    <p>
-                      <strong>Avatar URL:</strong>{" "}
-                      {selectedRepoData.owner.avatar_url ? (
-                        <a href={selectedRepoData.owner.avatar_url} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                          View Avatar
-                        </a>
-                      ) : "-"}
-                    </p>
+                    <a
+                      href={selectedRepoData.owner.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      View Repository
+                    </a>
                   </div>
-                ) : " -"}
+                </div>
               </div>
-              <p>
-                <strong>Private:</strong> {selectedRepoData.private ? "Yes" : "No"}
-              </p>
-              <p>
-                <strong>Homepage:</strong>{" "}
-                {selectedRepoData.homepage ? (
-                  <a href={selectedRepoData.homepage} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                    {selectedRepoData.homepage}
-                  </a>
-                ) : "-"}
-              </p>
-              <p>
-                <strong>Pushed At:</strong>{" "}
-                {selectedRepoData.pushed_at ? new Date(selectedRepoData.pushed_at).toLocaleString() : "-"}
-              </p>
-              <p>
-                <strong>Default Branch:</strong> {selectedRepoData.default_branch || "-"}
-              </p>
-              <p>
-                <strong>Language:</strong> {selectedRepoData.language || "-"}
-              </p>
-              <p>
-                <strong>Stargazers Count:</strong> {selectedRepoData.stargazers_count ?? "-"}
-              </p>
-              <p>
-                <strong>Forks Count:</strong> {selectedRepoData.forks_count ?? "-"}
-              </p>
-              <p>
-                <strong>Watchers Count:</strong> {selectedRepoData.watchers_count ?? "-"}
-              </p>
-              <p>
-                <strong>Open Issues Count:</strong> {selectedRepoData.open_issues_count ?? "-"}
-              </p>
-              <div>
+            )}
+
+            <hr className="block text-sm font-sm text-gray-200 dark:text-gray-800" />
+
+            <div>
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Repository Overview</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Name:</strong> {selectedRepoData.name || "-"}</p>
+                <p><strong>Full Name:</strong> {selectedRepoData.full_name || "-"}</p>
+                <p><strong>Default Branch:</strong> {selectedRepoData.default_branch || "-"}</p>
+                <p><strong>Language:</strong> {selectedRepoData.language || "-"}</p>
+                <p><strong>GitHub Repo ID:</strong> {selectedRepoData.github_repo_id || "-"}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Access Info</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Private:</strong> {selectedRepoData.private ? "Yes" : "No"}</p>
+                <div>
                 <strong>Permissions:</strong>
                 {selectedRepoData.permissions ? (
                   <div className="ml-4">
-                    <p>
-                      <strong>Admin:</strong> {selectedRepoData.permissions.admin ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Push:</strong> {selectedRepoData.permissions.push ? "Yes" : "No"}
-                    </p>
-                    <p>
-                      <strong>Pull:</strong> {selectedRepoData.permissions.pull ? "Yes" : "No"}
-                    </p>
+                    <p><strong>Admin:</strong> {selectedRepoData.permissions.admin ? "Yes" : "No"}</p>
+                    <p><strong>Push:</strong> {selectedRepoData.permissions.push ? "Yes" : "No"}</p>
+                    <p><strong>Pull:</strong> {selectedRepoData.permissions.pull ? "Yes" : "No"}</p>
                   </div>
                 ) : " -"}
               </div>
-              <p>
-                <strong>Created At:</strong>{" "}
-                {selectedRepoData.createdAt ? new Date(selectedRepoData.createdAt).toLocaleString() : "-"}
-              </p>
-              <p>
-                <strong>Updated At:</strong>{" "}
-                {selectedRepoData.updatedAt ? new Date(selectedRepoData.updatedAt).toLocaleString() : "-"}
-              </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timeline & Links</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Created At:</strong> {selectedRepoData.created_at ? new Date(selectedRepoData.created_at).toLocaleString() : "-"}</p>
+                <p><strong>Updated At:</strong> {selectedRepoData.updated_at ? new Date(selectedRepoData.updated_at).toLocaleString() : "-"}</p>
+                <p><strong>Pushed At:</strong> {selectedRepoData.pushed_at ? new Date(selectedRepoData.pushed_at).toLocaleString() : "-"}</p>
+                <p><strong>URL:</strong> {selectedRepoData.html_url ? <a href={selectedRepoData.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View in GitHub</a> : '-'}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Repository Stats</h3>
+              <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
+                <p><strong>Stargazers Count:</strong> {selectedRepoData.stargazers_count ?? "-"}</p>
+                <p><strong>Forks Count:</strong> {selectedRepoData.forks_count ?? "-"}</p>
+                <p><strong>Watchers Count:</strong> {selectedRepoData.watchers_count ?? "-"}</p>
+                <p><strong>Open Issues Count:</strong> {selectedRepoData.open_issues_count ?? "-"}</p>
+              </div>
             </div>
           </div>
         )}
-      </Modal>
+      </Drawer>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Table, Button, Modal, message, Space, Spin, Row, Col, Drawer, Input } from 'antd';
+import { Table, Button, Modal, message, Row, Col, Drawer, Input } from 'antd';
 import { ReloadOutlined, EyeOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { UserContext } from '../../contexts/UserContext';
@@ -311,9 +311,26 @@ const NotificationTable = () => {
       >
         {selectedCommit && (
           <div className="space-y-4">
-            {/* <p>
-              <strong>Commit ID:</strong> {selectedCommit.id || '-'}
-            </p> */}
+            <div className="mb-4">
+              <div className="flex items-center space-x-4 mt-2">
+                <img
+                  src={selectedCommit.author.avatar_url}
+                  alt="Author Avatar"
+                  className="w-12 h-12 rounded-full border"
+                />
+                <p className="text-md">
+                  <strong>Author:</strong>{" "}
+                  <a
+                    href={selectedCommit.author.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline text-md"
+                  >
+                    {selectedCommit.author.login}
+                  </a>
+                </p>
+              </div>
+            </div>
             <p>
               <strong>SHA:</strong> {selectedCommit.sha || "-"}
             </p>
@@ -326,33 +343,6 @@ const NotificationTable = () => {
                 {selectedCommit.commit.message || "-"}
               </Badge>
             </p>
-            <div>
-              <strong>Author Details:</strong>
-              <div className="ml-4">
-                <p>
-                  <strong>Login:</strong>{" "}
-                  <a
-                    href={selectedCommit.author.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    {selectedCommit.author.login}
-                  </a>
-                </p>
-                <p>
-                  <strong>Avatar URL:</strong>{" "}
-                  <a
-                    href={selectedCommit.author.avatar_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    View Avatar
-                  </a>
-                </p>
-              </div>
-            </div>
             <div>
               <strong>Commit Author:</strong>
               <div className="ml-4">
@@ -387,7 +377,6 @@ const NotificationTable = () => {
         )}
       </Modal>
 
-      {/* Drawer hiển thị chi tiết Workflow Run */}
       <Drawer
         title="Workflow Run Details"
         placement="right"
@@ -406,7 +395,6 @@ const NotificationTable = () => {
       >
         {selectedWorkflowRun && (
           <div className="space-y-5">
-            {/* Triggering Actor - Không nằm trong scope */}
             {selectedWorkflowRun.triggering_actor && (
               <div className="mb-4">
                 <div className="flex items-center space-x-4">
