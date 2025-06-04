@@ -1,17 +1,7 @@
-// UserMetaCard.tsx
-import React, { useState } from "react";
-import { Modal, Button as AntButton, Input as AntInput, Upload } from "antd";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { Modal, Button as AntButton, Form, Input, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import type { RcFile, UploadProps } from "antd/es/upload";
-import type { UploadChangeParam } from "antd/es/upload/interface";
-
-const getBase64 = (file: RcFile): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = (error) => reject(error);
-  });
+import axios from "axios";
 
 export default function UserMetaCard({ userData }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,84 +11,163 @@ export default function UserMetaCard({ userData }) {
     github_account: userData?.github_account || "",
     avatar: userData?.avatar || "",
   });
+  const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
+  const API_URL = import.meta.env.VITE_APP_API_URL;
 
-  const handleOk = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_APP_API_URL}userdata/${userData.user_id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) throw new Error("Failed to update user data");
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error("Error updating user data:", error);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
+  useEffect(() => {
     setFormData({
       fullname: userData?.fullname || "",
       bio: userData?.bio || "",
       github_account: userData?.github_account || "",
-      avatar: userData?.avatar || "",
+      avatar: userData?.avatar || formData.avatar,
     });
-  };
+  }, [userData]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleUpload = async (info: UploadChangeParam) => {
-    if (info.file.status === "done") {
-      const file = info.file.originFileObj as RcFile;
-      const base64 = await getBase64(file);
-      const formDataUpload = new FormData();
-      formDataUpload.append("avatar", file);
-      const uploadResponse = await fetch(`${import.meta.env.VITE_APP_API_URL}upload-avatar/${userData.user_id}`, {
-        method: "POST",
-        body: formDataUpload,
-      });
-      if (uploadResponse.ok) {
-        const { url } = await uploadResponse.json();
-        setFormData((prev) => ({ ...prev, avatar: url }));
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
       }
-    } else if (info.file.status === "error") {
-      console.error("Upload failed:", info.file.error);
-    }
-  };
+    };
+  }, [previewImage]);
 
-  const getInitial = (name) => {
+  const uploadAvatar = useCallback(async (token: string, userId: string) => {
+    if (!fileToUpload) return null;
+    if (!fileToUpload.type.startsWith("image/")) {
+      message.error("Please select an image file!");
+      throw new Error("Invalid file type");
+    }
+
+    const formDataUpload = new FormData();
+    formDataUpload.append("avatar", fileToUpload);
+    const response = await axios.post(
+      `${API_URL}/userdata/upload-avatar`,
+      formDataUpload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        params: { user_id: userId },
+      }
+    );
+    return response.data.url;
+  }, [API_URL, fileToUpload]);
+
+  const updateProfile = useCallback(async (data: any, token: string, userId: string) => {
+    await axios.put(
+      `${API_URL}/userdata/${userId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  }, [API_URL]);
+
+  const handleOk = useCallback(async () => {
+    try {
+      setUploading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      let updatedFormData = { ...formData };
+      const hasDataChanged =
+        formData.fullname !== userData?.fullname ||
+        formData.bio !== userData?.bio ||
+        formData.github_account !== userData?.github_account;
+
+      if (fileToUpload) {
+        try {
+          const avatarUrl = await uploadAvatar(token, userData.user_id);
+          if (avatarUrl) {
+            updatedFormData.avatar = avatarUrl;
+            setFormData((prev) => ({ ...prev, avatar: avatarUrl }));
+            message.success("Avatar uploaded successfully!");
+          }
+        } catch (uploadError) {
+          message.error(`Failed to upload avatar: ${uploadError.message}`);
+          return;
+        }
+      }
+
+      if (hasDataChanged) {
+        await updateProfile(updatedFormData, token, userData.user_id);
+        message.success("Profile data updated successfully!");
+      }
+
+      setIsModalOpen(false);
+      setPreviewImage(null);
+      setFileToUpload(null);
+    } catch (error) {
+      message.error(`Failed to update profile: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  }, [formData, userData, fileToUpload, uploadAvatar, updateProfile]);
+
+  const handleCancel = useCallback(() => {
+    setIsModalOpen(false);
+    setFormData((prev) => ({
+      fullname: userData?.fullname || "",
+      bio: userData?.bio || "",
+      github_account: userData?.github_account || "",
+      avatar: prev.avatar || userData?.avatar || "",
+    }));
+    setPreviewImage(null);
+    setFileToUpload(null);
+  }, [userData]);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileToUpload(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+    }
+  }, []);
+
+  const getInitial = useCallback((name: string) => {
     return name ? name.charAt(0).toUpperCase() : "U";
-  };
+  }, []);
+
+  const handleAvatarClick = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
 
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
-            <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-              {userData?.avatar ? (
+            <div
+              className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800 cursor-pointer"
+              onClick={handleAvatarClick}
+            >
+              {formData.avatar ? (
                 <img
-                  src={userData.avatar}
+                  src={formData.avatar}
                   alt="User Avatar"
                   className="h-20 w-20 rounded-full object-cover"
+                  onError={() => setFormData((prev) => ({ ...prev, avatar: "" }))}
                 />
               ) : (
                 <div className="h-20 w-20 rounded-full bg-brand-500 flex items-center justify-center text-white font-medium">
-                  {getInitial(userData?.fullname)}
+                  {getInitial(formData.fullname)}
                 </div>
               )}
             </div>
             <div className="order-3 xl:order-2">
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                {userData?.fullname || "N/A"}
+                {formData.fullname || "N/A"}
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -106,13 +175,13 @@ export default function UserMetaCard({ userData }) {
                 </p>
                 <div className="hidden h-3.5 w-px bg-gray-300 dark:bg-gray-700 xl:block"></div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {userData?.bio ? "Bio: " + userData?.bio : "Bio"}
+                  {formData.bio ? "Bio: " + formData.bio : "Bio"}
                 </p>
               </div>
             </div>
             <div className="flex items-center order-2 gap-2 grow xl:order-3 xl:justify-end">
               <a
-                href={userData?.github_account || "https://github.com"}
+                href={formData.github_account || "https://github.com"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
@@ -134,7 +203,7 @@ export default function UserMetaCard({ userData }) {
             </div>
           </div>
           <button
-            onClick={showModal}
+            onClick={handleAvatarClick}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
           >
             <svg
@@ -164,70 +233,81 @@ export default function UserMetaCard({ userData }) {
         width={700}
         okText="Save Changes"
         cancelText="Close"
+        confirmLoading={uploading}
       >
-        <div className="flex flex-col">
-          <div className="overflow-y-auto max-h-[450px] px-2 pb-3">
-            <div>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Full Name
-                  </label>
-                  <AntInput
-                    name="fullname"
-                    value={formData.fullname}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Bio
-                  </label>
-                  <AntInput
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    placeholder="Enter a short bio"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    GitHub Account
-                  </label>
-                  <AntInput
-                    name="github_account"
-                    value={formData.github_account}
-                    onChange={handleChange}
-                    placeholder="Enter your GitHub URL (e.g., https://github.com/username)"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Upload Avatar
-                  </label>
-                  <Upload
-                    name="avatar"
-                    listType="picture"
-                    maxCount={1}
-                    beforeUpload={() => false}
-                    onChange={handleUpload}
-                    showUploadList={false}
-                  >
-                    <AntButton icon={<UploadOutlined />}>Click to Upload</AntButton>
-                  </Upload>
-                  {formData.avatar && (
-                    <img
-                      src={formData.avatar}
-                      alt="Preview Avatar"
-                      className="mt-2 w-20 h-20 rounded-full object-cover"
-                    />
-                  )}
+        <Form
+          layout="vertical"
+          initialValues={formData}
+          onValuesChange={(changedValues, allValues) => {
+            setFormData(allValues);
+          }}
+          onFinish={handleOk}
+        >
+          <div className="flex flex-col">
+            <div className="overflow-y-auto max-h-[450px] px-2 pb-3">
+              <div>
+                <div className="grid grid-cols-1 lg:grid-cols-2">
+                  <div className="col-span-2">
+                    <Form.Item
+                      label="Full Name"
+                      name="fullname"
+                      rules={[{ required: true, message: "Please enter your full name!" }]}
+                    >
+                      <Input placeholder="Enter your full name" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2">
+                    <Form.Item label="Bio" name="bio">
+                      <Input placeholder="Enter a short bio" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2">
+                    <Form.Item
+                      label="GitHub Account"
+                      name="github_account"
+                      rules={[
+                        {
+                          pattern: /^https:\/\/github\.com\/[a-zA-Z0-9-]+\/?$/,
+                          message: "Please enter a valid GitHub URL (e.g., https://github.com/username)",
+                        },
+                      ]}
+                    >
+                      <Input placeholder="Enter your GitHub URL (e.g., https://github.com/username)" />
+                    </Form.Item>
+                  </div>
+                  <div className="col-span-2">
+                    <Form.Item label="Upload Avatar">
+                      <div>
+                        <AntButton
+                          icon={<UploadOutlined />}
+                          loading={uploading}
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                        >
+                          {uploading ? "Uploading..." : "Click to Upload"}
+                        </AntButton>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          ref={fileInputRef}
+                          style={{ display: "none" }}
+                        />
+                        {previewImage && (
+                          <img
+                            src={previewImage}
+                            alt="Preview Avatar"
+                            className="mt-2 w-20 h-20 rounded-full object-cover"
+                          />
+                        )}
+                      </div>
+                    </Form.Item>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Form>
       </Modal>
     </>
   );

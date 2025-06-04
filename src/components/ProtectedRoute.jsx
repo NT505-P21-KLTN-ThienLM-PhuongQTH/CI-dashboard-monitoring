@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { user } = useUser(); // Lấy user từ useUser
+  const { user } = useUser();
 
   console.log("ProtectedRoute user:", user); 
 

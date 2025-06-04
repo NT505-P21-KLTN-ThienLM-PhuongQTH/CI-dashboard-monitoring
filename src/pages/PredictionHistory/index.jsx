@@ -210,12 +210,16 @@ function PredictionHistory() {
           run_date: runDate,
         },
       });
+
+      const builds = response.data?.ci_builds || [];
+
       const cleanedData = {
-        ci_builds: response.data.ci_builds.map(build => {
+        ci_builds: builds.map(build => {
           const { _id, ...rest } = build;
           return rest;
         }),
       };
+
       setCiBuilds(cleanedData);
       setCurrentRunId(githubRunId);
       setIsModalVisible(true);

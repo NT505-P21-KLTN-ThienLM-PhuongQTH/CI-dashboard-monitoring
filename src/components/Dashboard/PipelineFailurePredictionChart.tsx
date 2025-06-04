@@ -231,12 +231,12 @@ export default function PipelineFailurePredictionChart({
             </Dropdown>
           </div>
         </div>
-        <div className="mt-2 text-center">
+        <div className="text-center">
           {loading ? (
             <p className="text-gray-500 dark:text-gray-400">Loading...</p>
           ) : latestPrediction ? (
             <div className="flex flex-col items-center">
-              <div className="relative w-full flex justify-center h-[200px]">
+              <div className="relative w-full flex justify-center h-[180px]">
                 <Chart
                   options={options}
                   series={series}

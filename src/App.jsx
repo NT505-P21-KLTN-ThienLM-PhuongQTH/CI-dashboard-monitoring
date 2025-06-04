@@ -52,7 +52,14 @@ function App() {
             <Route path="/current-model" element={<CurrentModel />}/>
             <Route path="/prediction-metrics" element={<PredictionMetric />} />
             <Route path="/prediction-history" element={<PredictionHistory />} />
-            <Route path="/reports" element={<Report />} />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Report />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/settings" element={<AccountSettings />} />
             <Route path="/unauthorized" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />

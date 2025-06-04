@@ -1,24 +1,72 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { UserContext } from "../../contexts/UserContext";
+import axios from "axios";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useContext(UserContext);
+  const [userData, setUserData] = useState(null);
+  const [error, setError] = useState(null);
 
-  function toggleDropdown() {
-    setIsOpen(!isOpen);
-  }
+  const userId = user?.id || null;
 
-  function closeDropdown() {
+  const API_URL = import.meta.env.VITE_APP_API_URL;
+
+  const fetchUserData = useCallback(async () => {
+    if (!userId) {
+      setError("User ID is not available");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("No authentication token found. Please log in.");
+        return;
+      }
+
+      const userDataResponse = await axios.get(
+        `${API_URL}/userdata/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setUserData(userDataResponse.data);
+
+      const reposResponse = await axios.get(
+        `${API_URL}/repos?user_id=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+  }, [userId, API_URL]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  const toggleDropdown = useCallback(() => {
+    setIsOpen((prev) => !prev);
+    if (!isOpen) {
+      fetchUserData(); // Làm mới dữ liệu khi mở dropdown
+    }
+  }, [isOpen, fetchUserData]);
+
+  const closeDropdown = useCallback(() => {
     setIsOpen(false);
-  }
+  }, []);
 
-  // Function to get the first letter of the user's name
-  const getInitial = (name) => {
+  const getInitial = useCallback((name) => {
     return name ? name.charAt(0).toUpperCase() : "U";
-  };
+  }, []);
 
   return (
     <div className="relative">
@@ -27,22 +75,23 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="mr-3 overflow-hidden rounded-full">
-          {user?.avatar_url ? (
+          {userData?.avatar ? (
             <img
-              src={user.avatar_url}
+              src={userData.avatar}
               alt="User Avatar"
               className="h-8 w-8 rounded-full object-cover"
+              onError={() => setUserData((prev) => ({ ...prev, avatar: null }))}
             />
           ) : (
             <div className="h-11 w-11 rounded-full bg-brand-500 flex items-center justify-center text-white font-medium">
-              {getInitial(user?.name)}
+              {getInitial(userData?.fullname || user?.name)}
             </div>
           )}
         </span>
 
         <div>
           <span className="block mr-1 font-bold text-theme-sm">
-            {user?.name ? `Hi, ${user.name}!` : "Hi, User!"}
+            {userData?.fullname ? `Hi, ${userData.fullname}!` : user?.name ? `Hi, ${user.name}!` : "Hi, User!"}
           </span>
           {user?.role === "admin" ? (
             <span className="block text-xs text-gray-500 dark:text-gray-400 capitalize">
@@ -77,10 +126,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.name ? user.name : "User Name"}
+            {userData?.fullname || user?.name || "User Name"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user?.email ? user.email : "user@example.com"}
+            {userData?.email || user?.email || "user@example.com"}
           </span>
         </div>
 

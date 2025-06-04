@@ -45,7 +45,7 @@ const ReportTable = () => {
             setLoading(true);
             try {
                 const token = localStorage.getItem('token');
-                const response = await axios.get(`${API_URL}/report/`, {
+                const response = await axios.get(`${API_URL}/report/all`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const reportsData = response.data;

@@ -132,19 +132,23 @@ function PredictionMetric() {
         setCiBuilds([]);
         return;
       }
+      console.log(GHTORRENT_API_URL);
 
       setMetricsLoading(true);
       try {
         const projectName = repoData.full_name;
         const branch = selectedBranch;
         console.log(`Fetching CI builds for project_name: ${projectName}, branch: ${branch}`);
-        const ciBuildsResponse = await axios.get(
-          `${GHTORRENT_API_URL}/ci_builds?project_name=${projectName}&branch=${branch}`
-        );
+        const ciBuildsResponse = await axios.get(`${GHTORRENT_API_URL}/ci_builds`, {
+          params: {
+            project_name: projectName,
+            branch: branch,
+          },
+        });
+
         const ciBuildsData = ciBuildsResponse.data.ci_builds || [];
         console.log("CI builds fetched:", ciBuildsData);
 
-        // Loại bỏ trường _id từ mỗi object trong ci_builds
         const cleanedCiBuildsData = ciBuildsData.map(build => {
           const { _id, ...rest } = build;
           return rest;
