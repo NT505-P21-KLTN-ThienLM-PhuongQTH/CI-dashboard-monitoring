@@ -5,25 +5,6 @@ import axios from 'axios';
 import { UserContext } from '../../contexts/UserContext';
 import Badge from '../ui/badge/Badge';
 
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: undefined,
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-      });
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return windowSize;
-};
-
 const NotificationTable = () => {
   const { user } = useContext(UserContext);
   const [commits, setCommits] = useState([]);
@@ -35,22 +16,34 @@ const NotificationTable = () => {
   const [repoData, setRepoData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const { width } = useWindowSize();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
-  const fetchCommits = async () => {
+  const fetchCommits = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/commits?user_id=${user.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = response.data;
+      const response = await axios.get(
+        `${API_URL}/commits?user_id=${user.id}&page=${page}&limit=${pageSize}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const { commits: data, pagination: pag } = response.data;
       setCommits(data);
       applyFiltersAndSort(data, searchText);
+      setPagination({
+        current: pag.page,
+        pageSize: pag.limit,
+        total: pag.total
+      });
     } catch (error) {
       message.error(error.response?.data?.error || 'Failed to fetch notifications');
     } finally {
@@ -75,7 +68,6 @@ const NotificationTable = () => {
       setSelectedWorkflowRun(response.data);
       setIsDrawerOpen(true);
 
-      // Fetch repo data if repo_id exists
       if (response.data.repo_id) {
         const repoResponse = await axios.get(`${API_URL}/repodata/${response.data.repo_id}`, {
           headers: {
@@ -123,6 +115,10 @@ const NotificationTable = () => {
     setIsDrawerOpen(false);
     setSelectedWorkflowRun(null);
     setRepoData(null);
+  };
+
+  const handleTableChange = (pag) => {
+    fetchCommits(pag.current, pag.pageSize);
   };
 
   const columns = [
@@ -253,7 +249,7 @@ const NotificationTable = () => {
           <Col xs={24} sm={12} md={8} lg={6}>
             <Button
               icon={<ReloadOutlined />}
-              onClick={fetchCommits}
+              onClick={() => fetchCommits(1, pagination.pageSize)}
               loading={loading}
             >
               Refresh
@@ -271,6 +267,14 @@ const NotificationTable = () => {
           loading={loading}
           scroll={{ x: 1200 }}
           size="small"
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            onChange: (page, pageSize) => handleTableChange({ current: page, pageSize })
+          }}
           components={{
             header: {
               row: ({ children }) => <tr>{children}</tr>,
@@ -291,7 +295,6 @@ const NotificationTable = () => {
         />
       </div>
 
-      {/* Modal xem chi tiết Commit */}
       <Modal
         title="Commit Details"
         open={isDetailModalOpen}
@@ -422,7 +425,6 @@ const NotificationTable = () => {
 
             <hr className="block text-sm font-sm text-gray-200 dark:text-gray-800" />
 
-            {/* Pipeline Overview */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pipeline Overview</h3>
               <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
@@ -460,7 +462,6 @@ const NotificationTable = () => {
               </div>
             </div>
 
-            {/* Execution Details */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Execution Details</h3>
               <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
@@ -514,7 +515,6 @@ const NotificationTable = () => {
               </div>
             </div>
 
-            {/* Timeline & Links */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timeline & Links</h3>
               <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
@@ -548,7 +548,6 @@ const NotificationTable = () => {
               </div>
             </div>
 
-            {/* Repository Info */}
             {repoData && (
               <div>
                 <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Repository Info</h3>

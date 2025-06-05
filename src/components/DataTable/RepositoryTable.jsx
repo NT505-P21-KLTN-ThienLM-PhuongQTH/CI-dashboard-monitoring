@@ -3,6 +3,7 @@ import { Table, Button, Form, Input, message, Space, Select, Spin, Row, Col, Mod
 import { EditOutlined, DeleteOutlined, ReloadOutlined, RedoOutlined } from '@ant-design/icons';
 import { UserContext } from '../../contexts/UserContext';
 import Badge from "../ui/badge/Badge";
+import axios from 'axios';
 
 const useWindowSize = () => {
   const [windowSize, setWindowSize] = useState({
@@ -23,12 +24,11 @@ const useWindowSize = () => {
   return windowSize;
 };
 
-// Khối State và Hook
 const RepositoryTable = () => {
   const { user } = useContext(UserContext);
   const [repos, setRepos] = useState([]);
   const [filteredRepos, setFilteredRepos] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false); // Thêm lại dòng này
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingRepo, setEditingRepo] = useState(null);
   const [selectedRepoData, setSelectedRepoData] = useState(null);
@@ -42,20 +42,26 @@ const RepositoryTable = () => {
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
-// Khối Fetch Data
   const fetchRepos = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/repos?user_id=${user.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch repositories');
+
+      let response;
+      if (user.role === "admin") {
+        response = await axios.get(`${API_URL}/repos/all`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        response = await axios.get(`${API_URL}/repos`, {
+          params: { user_id: user.id },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       }
-      const data = await response.json();
+
+      const data = response.data;
       setRepos(data);
       applyFiltersAndSort(data, searchText, statusFilter);
 
@@ -66,37 +72,33 @@ const RepositoryTable = () => {
         });
       }
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
     } finally {
       setLoading(false);
     }
   };
 
+
   const fetchRepoData = async (repoId) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/repodata/${repoId}`, {
+      const response = await axios.get(`${API_URL}/repodata/${repoId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch repository details');
-      }
-      const data = await response.json();
-      setSelectedRepoData(data);
-      setIsDrawerOpen(true); // Mở Drawer thay vì Modal
+      setSelectedRepoData(response.data);
+      setIsDrawerOpen(true);
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
     }
   };
 
   useEffect(() => {
     fetchRepos();
+    // eslint-disable-next-line
   }, [user.id]);
 
-// Khối Xử lý Filter và Sort
   const applyFiltersAndSort = (data, search, status) => {
     let filteredData = [...data];
 
@@ -126,7 +128,6 @@ const RepositoryTable = () => {
     applyFiltersAndSort(repos, searchText, value);
   };
 
-// Khối Xử lý Modal và Form
   const showModal = (repo = null) => {
     setEditingRepo(repo);
     if (repo) {
@@ -142,9 +143,9 @@ const RepositoryTable = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
-    setIsDrawerOpen(false); // Đóng Drawer
+    setIsDrawerOpen(false);
     setEditingRepo(null);
-    setSelectedRepoData(null); // Xóa dữ liệu chi tiết
+    setSelectedRepoData(null);
     form.resetFields();
   };
 
@@ -178,24 +179,21 @@ const RepositoryTable = () => {
 
       const token = localStorage.getItem("token");
       if (editingRepo) {
-        const response = await fetch(`${API_URL}/repos/${editingRepo.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        const response = await axios.put(
+          `${API_URL}/repos/${editingRepo.id}`,
+          {
             url: values.url,
             token: values.token,
-          }),
-        });
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update repository');
-        }
-
-        const updatedRepo = await response.json();
+        const updatedRepo = response.data;
         const updatedRepos = repos.map((repo) =>
           repo.id === editingRepo.id ? updatedRepo : repo
         );
@@ -203,32 +201,29 @@ const RepositoryTable = () => {
         applyFiltersAndSort(updatedRepos, searchText, statusFilter);
         message.success('Repository updated successfully!');
       } else {
-        const response = await fetch(`${API_URL}/repos`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
+        const response = await axios.post(
+          `${API_URL}/repos`,
+          {
             user_id: user.id,
             url: values.url,
             token: values.token,
-          }),
-        });
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to add repository');
-        }
-
-        const newRepo = await response.json();
+        const newRepo = response.data;
         const updatedRepos = [...repos, newRepo];
         setRepos(updatedRepos);
         applyFiltersAndSort(updatedRepos, searchText, statusFilter);
         message.success('Repository added successfully! Please refresh to see the updated status.');
       }
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
     } finally {
       setProcessing(false);
       setIsSubmitting(false);
@@ -239,30 +234,27 @@ const RepositoryTable = () => {
     try {
       setProcessing(true);
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_URL}/repos/${repo.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const response = await axios.put(
+        `${API_URL}/repos/${repo.id}`,
+        {
           url: repo.html_url,
           token: repo.token,
-        }),
-      });
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to retry repository');
-      }
-
-      const updatedRepo = await response.json();
+      const updatedRepo = response.data;
       const updatedRepos = repos.map((r) => (r.id === repo.id ? updatedRepo : r));
       setRepos(updatedRepos);
       applyFiltersAndSort(updatedRepos, searchText, statusFilter);
       message.success('Repository retried successfully!');
     } catch (error) {
-      message.error(error.message);
+      message.error(error.response?.data?.error || error.message);
     } finally {
       setProcessing(false);
     }
@@ -274,29 +266,23 @@ const RepositoryTable = () => {
       onOk: async () => {
         try {
           const token = localStorage.getItem("token");
-          const response = await fetch(`${API_URL}/repos/${id}`, {
-            method: 'DELETE',
+          await axios.delete(`${API_URL}/repos/${id}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
           });
-
-          if (!response.ok) {
-            throw new Error('Failed to delete repository');
-          }
 
           const updatedRepos = repos.filter((repo) => repo.id !== id);
           setRepos(updatedRepos);
           applyFiltersAndSort(updatedRepos, searchText, statusFilter);
           message.success('Repository deleted successfully!');
         } catch (error) {
-          message.error(error.message);
+          message.error(error.response?.data?.error || error.message);
         }
       },
     });
   };
 
-// Khối Cấu hình Table
   const columns = [
     {
       title: 'Full Name',
@@ -380,18 +366,17 @@ const RepositoryTable = () => {
           )}
           <Button
             type="text"
-            onClick={() => fetchRepoData(record.id)} // Gọi API để lấy chi tiết
+            onClick={() => fetchRepoData(record.id)}
             style={{ color: '#1890ff' }}
           >
             View
           </Button>
         </Space>
       ),
-      width: 200,
+      width: 250,
     },
   ].filter((col) => !col.hidden);
 
-// Khối Render UI
   return (
     <div>
       <div style={{ marginBottom: 16 }}>

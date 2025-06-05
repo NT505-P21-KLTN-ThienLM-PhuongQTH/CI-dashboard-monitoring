@@ -8,7 +8,6 @@ import { UserContext } from '../../contexts/UserContext';
 import { EyeOutlined } from '@ant-design/icons';
 import Badge from '../ui/badge/Badge';
 
-
 export default function NotificationDropdown() {
   const { user } = useContext(UserContext);
   const [isOpen, setIsOpen] = useState(false);
@@ -19,27 +18,22 @@ export default function NotificationDropdown() {
   const [selectedCommit, setSelectedCommit] = useState(null);
   const [selectedWorkflowRun, setSelectedWorkflowRun] = useState(null);
   const [repoData, setRepoData] = useState(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const observerRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
-  const fetchCommits = async (pageNum = 1, append = false) => {
+  const fetchCommits = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/commits?user_id=${user.id}&page=${pageNum}&limit=5`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        `${API_URL}/commits/recent?user_id=${user.id}&limit=20`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = response.data;
-      if (append) {
-        setCommits((prev) => [...prev, ...data]);
-      } else {
-        setCommits(data);
-      }
-      if (data.length < 5) setHasMore(false);
+      setCommits(data);
       if (data.length > 0) setNotifying(true);
     } catch (error) {
       message.error(error.response?.data?.error || 'Failed to fetch notifications');
@@ -75,23 +69,6 @@ export default function NotificationDropdown() {
       fetchCommits();
     }
   }, [user?.id]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage((prev) => prev + 1);
-        fetchCommits(page + 1, true);
-      }
-    }, { threshold: 1 });
-
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
-
-    return () => {
-      if (observerRef.current) observer.unobserve(observerRef.current);
-    };
-  }, [hasMore, page]);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -228,7 +205,7 @@ export default function NotificationDropdown() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:underline"
-                          onClick={(e) => e.stopPropagation()} // Ngăn đóng dropdown khi nhấn link
+                          onClick={(e) => e.stopPropagation()}
                         >
                           (View Commit)
                         </a>
@@ -248,7 +225,6 @@ export default function NotificationDropdown() {
               No notifications available
             </li>
           )}
-          {hasMore && <div ref={observerRef} className="h-1"></div>}
         </ul>
         <Link
           to="/notifications"
@@ -258,7 +234,6 @@ export default function NotificationDropdown() {
         </Link>
       </Dropdown>
 
-      {/* Modal chi tiết Commit */}
       <Modal
         title="Commit Details"
         open={isDetailModalOpen}
@@ -341,7 +316,6 @@ export default function NotificationDropdown() {
         )}
       </Modal>
 
-      {/* Drawer hiển thị chi tiết Workflow Run */}
       <Drawer
         title="Workflow Run Details"
         placement="right"
@@ -360,7 +334,6 @@ export default function NotificationDropdown() {
       >
         {selectedWorkflowRun && (
           <div className="space-y-5">
-            {/* Triggering Actor - Không nằm trong scope */}
             {selectedWorkflowRun.triggering_actor && (
               <div className="mb-4">
                 <div className="flex items-center space-x-4">
@@ -388,7 +361,6 @@ export default function NotificationDropdown() {
 
             <hr className="block text-sm font-sm text-gray-200 dark:text-gray-800" />
 
-            {/* Pipeline Overview */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pipeline Overview</h3>
               <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
@@ -426,7 +398,6 @@ export default function NotificationDropdown() {
               </div>
             </div>
 
-            {/* Execution Details */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Execution Details</h3>
               <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
@@ -480,7 +451,6 @@ export default function NotificationDropdown() {
               </div>
             </div>
 
-            {/* Timeline & Links */}
             <div>
               <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timeline & Links</h3>
               <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
@@ -514,7 +484,6 @@ export default function NotificationDropdown() {
               </div>
             </div>
 
-            {/* Repository Info */}
             {repoData && (
               <div>
                 <h3 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Repository Info</h3>
@@ -551,4 +520,4 @@ export default function NotificationDropdown() {
       </Drawer>
     </div>
   );
-}
+};
