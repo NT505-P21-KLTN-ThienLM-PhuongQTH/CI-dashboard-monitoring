@@ -1,7 +1,7 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import axios from "axios";
 import { Table, Button, Modal, Form, Input, message, Space, Select, Row, Col, Drawer } from "antd";
-import { EditOutlined, DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, ReloadOutlined, UploadOutlined } from "@ant-design/icons";
 import { UserContext } from "../../contexts/UserContext";
 import Badge from "../ui/badge/Badge";
 
@@ -17,31 +17,37 @@ const UserTable = () => {
   const [searchText, setSearchText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [fileToUpload, setFileToUpload] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
-  const getInitial = (name) => {
+  const getInitial = useCallback((name) => {
     return name ? name.charAt(0).toUpperCase() : "U";
-  };
+  }, []);
 
-  const handleAvatarClick = () => {
+  const handleAvatarClick = useCallback(() => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-  };
+  }, []);
 
-  const isPasswordStrong = (password) => {
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    return strongPasswordRegex.test(password);
-  };
+  const handleFileChange = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        message.error("Please select an image file!");
+        return;
+      }
+      setFileToUpload(file);
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewImage(previewUrl);
+    }
+  }, []);
 
-  // Fetch user list
-  useEffect(() => {
-    fetchUsers();
-  }, [user.id]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -56,9 +62,67 @@ const UserTable = () => {
     } finally {
       setLoading(false);
     }
+  }, [API_URL, searchText, roleFilter]);
+
+  const uploadAvatar = useCallback(async (userId) => {
+    if (!fileToUpload) return null;
+    try {
+      setUploadingAvatar(true);
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("avatar", fileToUpload);
+      const response = await axios.post(
+        `${API_URL}/userdata/upload-avatar`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+          params: { user_id: userId },
+        }
+      );
+      message.success("Avatar uploaded successfully!");
+      return response.data.url; // Pre-signed URL
+    } catch (error) {
+      console.error("Upload error:", error);
+      message.error(`Failed to upload avatar: ${error.response?.data?.error || error.message}`);
+      throw error;
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }, [API_URL, fileToUpload]);
+
+  const handleSaveAvatar = useCallback(async () => {
+    if (!editingUser || !fileToUpload) return;
+    try {
+      const avatarUrl = await uploadAvatar(editingUser.user_id);
+      if (avatarUrl) {
+        setEditingUser((prev) => ({ ...prev, avatar: avatarUrl }));
+        setPreviewImage(null);
+        setFileToUpload(null);
+        fetchUsers();
+      }
+    } catch (error) {
+      // Error handled in uploadAvatar
+    }
+  }, [editingUser, fileToUpload, uploadAvatar, fetchUsers]);
+
+  const isPasswordStrong = (password) => {
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    return strongPasswordRegex.test(password);
   };
 
-  const applyFiltersAndSort = (data, search, role) => {
+  useEffect(() => {
+    fetchUsers();
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage);
+      }
+    };
+  }, [user.id]);
+
+  const applyFiltersAndSort = useCallback((data, search, role) => {
     let filteredData = [...data];
 
     if (search) {
@@ -74,19 +138,19 @@ const UserTable = () => {
     }
 
     setFilteredUsers(filteredData);
-  };
+  }, []);
 
-  const handleSearch = (value) => {
+  const handleSearch = useCallback((value) => {
     setSearchText(value);
     applyFiltersAndSort(users, value, roleFilter);
-  };
+  }, [users, roleFilter, applyFiltersAndSort]);
 
-  const handleRoleFilter = (value) => {
+  const handleRoleFilter = useCallback((value) => {
     setRoleFilter(value);
     applyFiltersAndSort(users, searchText, value);
-  };
+  }, [users, searchText, applyFiltersAndSort]);
 
-  const showModal = (type, user = null) => {
+  const showModal = useCallback((type, user = null) => {
     setEditingUser(user);
     if (user) {
       form.setFieldsValue(
@@ -113,20 +177,24 @@ const UserTable = () => {
               postalCode: user.address?.postalCode || "",
             }
       );
+      setPreviewImage(user.avatar || null);
     } else {
       form.resetFields();
+      setPreviewImage(null);
     }
     setIsModalVisible((prev) => ({ ...prev, [type]: true }));
-  };
+  }, [form]);
 
-  const handleCancel = (type) => {
+  const handleCancel = useCallback((type) => {
     setIsModalVisible((prev) => ({ ...prev, [type]: false }));
     setIsDrawerOpen(false);
     setEditingUser(null);
+    setPreviewImage(null);
+    setFileToUpload(null);
     form.resetFields();
-  };
+  }, [form]);
 
-  const handleSubmit = async (type) => {
+  const handleSubmit = useCallback(async (type) => {
     if (isSubmitting) {
       message.warning("A request is already in progress. Please wait.");
       return;
@@ -137,19 +205,18 @@ const UserTable = () => {
       const values = await form.validateFields();
       const token = localStorage.getItem("token");
       if (editingUser) {
-        if (type === "personal") {
-          await axios.put(`${API_URL}/userdata/${editingUser.user_id}`, values, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          message.success("Personal information updated successfully!");
-        } else {
-          await axios.put(`${API_URL}/userdata/${editingUser.user_id}`, {
-            address: values,
-          }, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          message.success("Address updated successfully!");
+        let avatarUrl = editingUser.avatar;
+        if (fileToUpload) {
+          avatarUrl = await uploadAvatar(editingUser.user_id);
         }
+        const payload = type === "personal"
+          ? { ...values, avatar: avatarUrl }
+          : { address: values, avatar: avatarUrl };
+
+        await axios.put(`${API_URL}/userdata/${editingUser.user_id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        message.success(type === "personal" ? "Personal information updated successfully!" : "Address updated successfully!");
         fetchUsers();
       } else if (type === "add") {
         await axios.post(`${API_URL}/user`, values, {
@@ -160,14 +227,14 @@ const UserTable = () => {
       }
       handleCancel(type);
     } catch (error) {
-      console.error("Error saving user: ", error);
-      message.error((error.response?.data?.error || "An error occurred"));
+      console.error("Error saving user:", error);
+      message.error(error.response?.data?.error || "An error occurred");
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [API_URL, editingUser, fileToUpload, form, isSubmitting, uploadAvatar, fetchUsers, handleCancel]);
 
-  const handleDelete = (userId) => {
+  const handleDelete = useCallback((userId) => {
     Modal.confirm({
       title: "Are you sure you want to delete this user?",
       onOk: async () => {
@@ -185,12 +252,13 @@ const UserTable = () => {
         }
       },
     });
-  };
+  }, [API_URL, users, searchText, roleFilter, applyFiltersAndSort]);
 
-  const openDetailDrawer = (user) => {
+  const openDetailDrawer = useCallback((user) => {
     setEditingUser(user);
+    setPreviewImage(user.avatar || null);
     setIsDrawerOpen(true);
-  };
+  }, []);
 
   const columns = [
     {
@@ -461,6 +529,31 @@ const UserTable = () => {
                       <Input placeholder="Enter GitHub username" autoComplete="username" />
                     </Form.Item>
                   </div>
+                  <div className="col-span-2">
+                    <Form.Item label="Upload Avatar">
+                      <Button
+                        icon={<UploadOutlined />}
+                        onClick={handleAvatarClick}
+                        disabled={isSubmitting}
+                      >
+                        Click to Upload
+                      </Button>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        style={{ display: "none" }}
+                      />
+                      {previewImage && (
+                        <img
+                          src={previewImage}
+                          alt="Preview Avatar"
+                          className="mt-2 w-20 h-20 rounded-full object-cover"
+                        />
+                      )}
+                    </Form.Item>
+                  </div>
                 </div>
               )}
               {isModalVisible.address && (
@@ -490,13 +583,23 @@ const UserTable = () => {
       <Drawer
         title="User Details"
         placement="right"
-        onClose={handleCancel}
+        onClose={() => handleCancel("personal")}
         open={isDrawerOpen}
         width={Math.min(window.innerWidth * 0.9, 550)}
         zIndex={10000}
         footer={
-          <div className="flex justify-end">
-            <Button onClick={() => handleCancel("personal")} style={{ marginRight: 8 }}>
+          <div className="flex justify-end gap-2">
+            {fileToUpload && (
+              <Button
+                type="primary"
+                onClick={handleSaveAvatar}
+                loading={uploadingAvatar}
+                style={{ backgroundColor: "#1890ff", borderColor: "#1890ff" }}
+              >
+                Save Avatar
+              </Button>
+            )}
+            <Button onClick={() => handleCancel("personal")}>
               Close
             </Button>
           </div>
@@ -507,21 +610,27 @@ const UserTable = () => {
           <div className="space-y-5">
             <div className="mb-4">
               <div className="flex items-center space-x-4 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 space-y-2">
-                <p onClick={handleAvatarClick} className="cursor-pointer">
+                <div onClick={handleAvatarClick} className="cursor-pointer">
                   <input
                     type="file"
                     accept="image/*"
                     ref={fileInputRef}
+                    onChange={handleFileChange}
                     style={{ display: "none" }}
                   />
-                  {editingUser.avatar ? (
-                    <img src={editingUser.avatar} alt="Avatar" className="w-28 h-28 rounded-full" />
+                  {previewImage || editingUser.avatar ? (
+                    <img
+                      src={previewImage || editingUser.avatar}
+                      alt="Avatar"
+                      className="w-28 h-28 rounded-full object-cover"
+                      onError={() => setPreviewImage(null)}
+                    />
                   ) : (
                     <div className="w-28 h-28 rounded-full bg-brand-600 flex items-center justify-center text-white text-[38px] font-medium">
                       {getInitial(editingUser.fullname)}
                     </div>
                   )}
-                </p>
+                </div>
                 <div>
                   <p className="text-lg font-medium mb-2">
                     {editingUser.fullname || "N/A"}
@@ -609,7 +718,7 @@ const UserTable = () => {
                     <p><strong>City/State:</strong> {editingUser.address.cityState || "-"}</p>
                     <p><strong>Postal Code:</strong> {editingUser.address.postalCode || "-"}</p>
                   </>
-                ) : " -"}
+                ) : "-"}
               </div>
             </div>
           </div>
