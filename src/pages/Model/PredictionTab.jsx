@@ -126,65 +126,47 @@ const PredictionTab = ({ modelData }) => {
   const dummyInput = {
     ci_builds: [
       {
-        _id: "681394b89e247d0a2a3596d0",
-        git_branch: "main",
-        git_all_built_commits: "7d8e41598c210104c03be7e1a8b8262c02bf78b0",
-        git_num_all_built_commits: 1,
-        git_trigger_commit: "7d8e41598c210104c03be7e1a8b8262c02bf78b0",
-        git_diff_src_churn: 0,
-        git_diff_test_churn: 0,
-        gh_project_name: "mablhq/github-run-tests-action",
-        gh_is_pr: false,
-        gh_lang: "typescript",
-        gh_team_size: 1,
-        gh_num_issue_comments: 0,
-        gh_num_pr_comments: 0,
-        gh_num_commit_comments: 0,
-        gh_diff_files_added: 0,
-        gh_diff_files_deleted: 0,
-        gh_diff_files_modified: 1,
-        gh_diff_tests_added: 0,
+        _id: "abc123def456ghi789jkl012",
+        git_branch: "feature/improve-ci",
+        git_all_built_commits: "a1b2c3d4e5f67890123456789abcdef12345678",
+        git_num_all_built_commits: 3,
+        git_trigger_commit: "a1b2c3d4e5f67890123456789abcdef12345678",
+        git_diff_src_churn: 15,
+        git_diff_test_churn: 8,
+        gh_project_name: "sample-org/sample-ci-project",
+        gh_is_pr: true,
+        gh_lang: "javascript",
+        gh_team_size: 5,
+        gh_num_issue_comments: 2,
+        gh_num_pr_comments: 4,
+        gh_num_commit_comments: 1,
+        gh_diff_files_added: 2,
+        gh_diff_files_deleted: 1,
+        gh_diff_files_modified: 3,
+        gh_diff_tests_added: 2,
         gh_diff_tests_deleted: 0,
-        gh_diff_src_files: 0,
-        gh_diff_doc_files: 0,
-        gh_diff_other_files: 1,
-        gh_num_commits_on_files_touched: 2,
-        gh_sloc: 662,
-        gh_test_lines_per_kloc: 209,
-        gh_test_cases_per_kloc: 11,
-        gh_asserts_cases_per_kloc: 20,
-        gh_by_core_team_member: true,
-        gh_repo_age: 1765.14,
-        gh_repo_num_commits: 111,
-        build_duration: 131,
+        gh_diff_src_files: 3,
+        gh_diff_doc_files: 1,
+        gh_diff_other_files: 0,
+        gh_num_commits_on_files_touched: 6,
+        gh_sloc: 1250,
+        gh_test_lines_per_kloc: 180,
+        gh_test_cases_per_kloc: 14,
+        gh_asserts_cases_per_kloc: 25,
+        gh_by_core_team_member: false,
+        gh_repo_age: 985.75,
+        gh_repo_num_commits: 289,
+        build_duration: 198,
         build_failed: "passed",
-        gh_build_started_at: "05/21/2024 16:51:00",
+        gh_build_started_at: "06/01/2025 10:15:00",
       },
     ],
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6">
       {/* Left Side: Model Selection and Info */}
       <div className="space-y-6">
-        <div className="rounded-2xl p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Select Model
-          </label>
-          <Select
-            value={testSelectedModel}
-            onChange={setTestSelectedModel}
-            className="w-full"
-            style={{ width: "100%" }}
-          >
-            {["Stacked-LSTM", "Bi-LSTM", "Conv-LSTM"].map((model) => (
-              <Select.Option key={model} value={model}>
-                {model}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
-
         <div className="w-full rounded-2xl p-5 border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="lg:mb-4">
             <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -306,21 +288,23 @@ const PredictionTab = ({ modelData }) => {
           )}
 
           {/* Prediction Result */}
-          <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 mt-4">
-            <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-              Prediction Result
-            </h4>
-            {predictionResult ? (
-              <div>
-                <p
-                  className={`text-lg font-semibold ${
-                    !predictionResult.buildFailed ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  Result: {predictionResult.buildFailed ? "FAIL" : "PASS"}
-                </p>
-                {predictionResult.projectName && predictionResult.gitBranch && (
-                  <p className="mt-2">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 mt-4">
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                  Prediction Result
+                </h4>
+                {predictionResult ? (
+                  <div>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-lg font-semibold">Result:</span>
+                    <Badge
+                      size="medium"
+                      color={predictionResult.buildFailed ? "error" : "success"}
+                    >
+                    {predictionResult.buildFailed ? "Failure" : "Success"}
+                    </Badge>
+                  </div>
+                  {predictionResult.projectName && predictionResult.gitBranch && (
+                    <p className="mt-2">
                     <strong>Repository Link:</strong>{" "}
                     <a
                       href={`https://github.com/${predictionResult.projectName}/tree/${predictionResult.gitBranch}`}
@@ -330,12 +314,8 @@ const PredictionTab = ({ modelData }) => {
                     >
                       View Repo
                     </a>
-                  </p>
-                )}
-                {/* <p className="mt-2">
-                  <strong>Confidence:</strong>{" "}
-                  {predictionResult.confidencePercentage}%
-                </p> */}
+                    </p>
+                  )}
                 <p className="mt-1">
                   <strong>Execution Time:</strong>{" "}
                   {Number(predictionResult.executionTime).toFixed(2)} seconds

@@ -231,32 +231,48 @@ const RepositoryTable = () => {
   };
 
   const handleRetry = async (repo) => {
+    // try {
+    //   setProcessing(true);
+    //   const token = localStorage.getItem("token");
+    //   const response = await axios.put(
+    //     `${API_URL}/repos/${repo.id}`,
+    //     {
+    //       url: repo.html_url,
+    //       token: repo.token,
+    //     },
+    //     {
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${token}`,
+    //       },
+    //     }
+    //   );
+
+    //   const updatedRepo = response.data;
+    //   const updatedRepos = repos.map((r) => (r.id === repo.id ? updatedRepo : r));
+    //   setRepos(updatedRepos);
+    //   applyFiltersAndSort(updatedRepos, searchText, statusFilter);
+    //   message.success('Repository retried successfully!');
+    // } catch (error) {
+    //   message.error(error.response?.data?.error || error.message);
+    // } finally {
+    //   setProcessing(false);
+    // }
     try {
-      setProcessing(true);
       const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `${API_URL}/repos/${repo.id}`,
-        {
-          url: repo.html_url,
-          token: repo.token,
-        },
+      await axios.post(
+        `${API_URL}/webhooks/trigger-sync`,
+        { repo_id: repo.id },
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
         }
       );
-
-      const updatedRepo = response.data;
-      const updatedRepos = repos.map((r) => (r.id === repo.id ? updatedRepo : r));
-      setRepos(updatedRepos);
-      applyFiltersAndSort(updatedRepos, searchText, statusFilter);
-      message.success('Repository retried successfully!');
+      message.success("Sync triggered. Please wait for the repository status to change to 'Success'.");
     } catch (error) {
-      message.error(error.response?.data?.error || error.message);
-    } finally {
-      setProcessing(false);
+      message.error(error.response?.data?.error || "Failed to trigger sync");
     }
   };
 
@@ -326,7 +342,7 @@ const RepositoryTable = () => {
             color={
               status === 'Success'
                 ? 'success'
-                : status === 'Pending'
+                : status === 'Pending' || status === 'Queued'
                 ? 'warning'
                 : 'error'
             }

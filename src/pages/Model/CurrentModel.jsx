@@ -8,8 +8,6 @@ import ModelInfoTab from "./ModelInfoTab";
 import ModelListTab from "./ModelListTab";
 import PredictionTab from "./PredictionTab";
 
-const { TabPane } = Tabs;
-
 function CurrentModel() {
   const { user } = useContext(UserContext);
   const [modelData, setModelData] = useState(null);
@@ -46,11 +44,6 @@ function CurrentModel() {
         pageTitle="Model"
         description="AI Model selected for predicting build failed pipelines."
       />
-      {/* <div className="rounded-2xl border border-gray-200 p-5 dark:border-gray-800 lg:p-6 mb-6 max-w-full overflow-x-auto">
-        <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Hello
-        </label>
-      </div> */}
       <Tabs
         defaultActiveKey="1"
         className="block text-md font-medium text-gray-700 dark:text-gray-300"

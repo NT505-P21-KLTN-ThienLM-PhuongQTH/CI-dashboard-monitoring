@@ -139,7 +139,7 @@ export default function PipelineFailurePredictionChart({
   };
 
   // Progress bar options
-  const series = latestPrediction?.predicted_result === true ? [100] : [0];
+  const series = [100];
   const options: ApexOptions = {
     chart: {
       fontFamily: "Outfit, sans-serif",

@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Table, Button, Space, Input, Drawer } from "antd";
+import React, { useState, useEffect, useContext } from "react";
+import { Table, Button, Space, Input, Drawer, message, Modal } from "antd";
 import axios from "axios";
 import Badge from "../ui/badge/Badge";
+import { ReloadOutlined, RedoOutlined } from '@ant-design/icons';
+import { UserContext } from '../../contexts/UserContext';
 
 const { Search } = Input;
 
 const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
+  const { user } = useContext(UserContext);
   const [runs, setRuns] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -51,6 +54,37 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
       setIsDrawerOpen(true);
     } catch (error) {
       console.error("Error fetching run details:", error);
+    }
+  };
+
+  const handleRerunWorkflow = async (runId, userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        message.error("No authentication token found. Please log in again.");
+        return;
+      }
+      console.log("Token:", token); // Debug token
+      console.log("Request URL:", `${API_URL}/workflow_run/runs/${runId}/rerun?user_id=${userId}`);
+
+      const response = await axios.post(
+        `${API_URL}/workflow_run/runs/${runId}/rerun?user_id=${userId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      message.success("Workflow run re-run initiated successfully!");
+      fetchWorkflowRuns(currentPage); // Refresh table after rerun
+    } catch (error) {
+      console.error("Error re-running workflow:", error);
+      if (error.response) {
+        message.error(`Failed to re-run workflow: ${error.response.data.details || error.message}`);
+      } else {
+        message.error("Failed to re-run workflow due to an error.");
+      }
     }
   };
 
@@ -242,6 +276,36 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
           >
             View
           </Button>
+          <Button
+            type="text"
+            icon={<RedoOutlined />}
+            style={{ color: '#FAAD14' }}
+            onClick={() => {
+              Modal.confirm({
+                title: "Confirm Rerun",
+                content: (
+                  <span>
+                    Are you sure you want to re-run workflow run ID&nbsp;
+                    <a
+                      href={record.html_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#1890ff", textDecoration: "underline" }}
+                    >
+                      {record.github_run_id}
+                    </a>
+                    ?
+                  </span>
+                ),
+                okText: "Yes",
+                okType: "primary",
+                cancelText: "No",
+                onOk: () => handleRerunWorkflow(record.id, user.id),
+              });
+            }}
+          >
+            Rerun
+          </Button>
         </Space>
       ),
     },
@@ -252,6 +316,10 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
     setSelectedWorkflowRun(null);
   };
 
+  const handleRefresh = () => {
+    fetchWorkflowRuns(currentPage);
+  };
+
   return (
     <div>
       {title && (
@@ -259,13 +327,20 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
           {title}
         </h3>
       )}
-      <div className="mb-4">
+      <div className="mb-4 flex items-center gap-4">
         <Search
           placeholder="Search by Head SHA or Event"
           onSearch={handleSearch}
           onChange={(e) => handleSearch(e.target.value)}
-          style={{ width: '35%' }}
+          style={{ width: "25%" }}
         />
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={handleRefresh}
+          loading={loading}
+        >
+          Refresh
+        </Button>
       </div>
       <Table
         columns={columns}
@@ -369,7 +444,6 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
                 <p><strong>URL:</strong> {selectedWorkflowRun.html_url ? <a href={selectedWorkflowRun.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View in GitHub</a> : '-'}</p>
               </div>
             </div>
-
           </div>
         )}
       </Drawer>
