@@ -603,18 +603,19 @@ const RepositoryTable = () => {
       >
         <div>
           <h3 className="text-lg font-semibold mb-2">How to Create a GitHub Personal Access Token (PAT)</h3>
-          <p className="mb-2">Follow these steps to generate a token with read-only access:</p>
+          <p className="mb-2">Follow these steps to generate a token with the required permissions:</p>
           <ol className="list-decimal pl-5 mb-2">
             <li>Go to <a href="https://github.com/settings/profile" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub Profile</a> {'>'} <strong>Settings</strong> {'>'} <strong>Developer settings</strong> {'>'} <strong>Personal access tokens</strong> {'>'} <strong>Tokens (classic)</strong>.</li>
             <li>Click <strong>Generate new token (classic)</strong>.</li>
-            <li>Enter a name (e.g., "ReadOnlyToken") and select an expiration date (or "No expiration" if needed).</li>
+            <li>Enter a name (e.g., "WorkflowToken") and select an expiration date (or "No expiration" if needed).</li>
             <li>Select the following scopes (permissions):<br />
-              - <strong>repo</strong>: Enable and select only <strong>repo:status</strong> (for public repos) or <strong>repo</strong> (for private repos).<br />
-              - <strong>workflow</strong>: Enable <strong>read:packages</strong> if you need to read workflow data.</li>
+              - <strong>repo</strong>: Enable the full <strong>repo</strong> scope (includes <strong>repo:status</strong>, <strong>repo:public_repo</strong>, and <strong>repo</strong> for reading content of both public and private repositories).<br />
+              - <strong>workflow</strong>: Enable <strong>read:packages</strong> (to view workflow content) and <strong>write:workflow</strong> (to rerun a workflow run).<br />
+              - <strong>admin:repo_hook</strong>: Enable to add and delete webhooks (optional, for automatic updates if needed).</li>
             <li>Click <strong>Generate token</strong>, then copy the token immediately (it won’t be shown again).</li>
             <li>Store the token securely (e.g., in a password manager) and do not share it.</li>
           </ol>
-          <p className="mt-2"><strong>Note:</strong> A read-only token is sufficient for accessing repository data. Avoid granting write or admin permissions unless necessary.</p>
+          <p className="mt-2"><strong>Note:</strong> The token grants read access to repository content, ability to rerun workflows, and (if enabled) webhook management. Only enable <strong>admin:repo_hook</strong> if automatic updates are required.</p>
         </div>
       </Modal>
     </div>
