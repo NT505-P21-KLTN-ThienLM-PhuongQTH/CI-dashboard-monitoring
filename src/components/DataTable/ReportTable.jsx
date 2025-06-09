@@ -452,24 +452,6 @@ const ReportTable = () => {
                     bordered
                     scroll={{ x: 1200 }}
                     size="small"
-                    components={{
-                        header: {
-                            row: ({ children }) => <tr>{children}</tr>,
-                            cell: ({ children }) => (
-                                <th className="border-b text-start text-sm">
-                                    {children}
-                                </th>
-                            ),
-                        },
-                        body: {
-                            row: ({ children }) => <tr>{children}</tr>,
-                            cell: ({ children }) => (
-                                <td className="text-start text-sm">
-                                    {children}
-                                </td>
-                            ),
-                        },
-                    }}
                     style={{
                         minWidth: '100%',
                     }}
