@@ -1,27 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Table, Button, Space, Modal, message, Input } from 'antd';
-import { DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { DeleteOutlined, CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import Badge from "../ui/badge/Badge";
-
-const useWindowSize = () => {
-    const [windowSize, setWindowSize] = useState({
-        width: undefined,
-    });
-
-    useEffect(() => {
-        const handleResize = () => {
-            setWindowSize({
-                width: window.innerWidth,
-            });
-        };
-        window.addEventListener('resize', handleResize);
-        handleResize();
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    return windowSize;
-};
 
 const ReportTable = () => {
     const [reports, setReports] = useState([]);
@@ -35,57 +16,58 @@ const ReportTable = () => {
         title: '',
         content: '',
     });
-    const { width } = useWindowSize();
 
     const API_URL = import.meta.env.VITE_APP_API_URL;
 
-    // Fetch all reports
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`${API_URL}/report/all`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const reportsData = response.data;
+
+            const updatedReports = await Promise.all(reportsData.map(async (report) => {
+                console.log(`Fetching prediction for id: ${report.prediction_id}`);
+                try {
+                    const predictionResponse = await axios.get(`${API_URL}/prediction/results/${report.prediction_id}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    return {
+                        ...report,
+                        predicted_result: predictionResponse.data.predicted_result,
+                        actual_result: predictionResponse.data.actual_result,
+                    };
+                } catch (error) {
+                    console.error(`Error fetching prediction for id ${report.prediction_id}:`, error);
+                    message.error(error.message);
+                    return {
+                        ...report,
+                        predicted_result: null,
+                        actual_result: null,
+                    };
+                }
+            }));
+
+            setReports(updatedReports);
+            setFilteredReports(updatedReports);
+            console.log('Reports with predictions fetched:', updatedReports);
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            message.error(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchReports = async () => {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get(`${API_URL}/report/all`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const reportsData = response.data;
-
-                // Fetch prediction results for each report
-                const updatedReports = await Promise.all(reportsData.map(async (report) => {
-                    console.log(`Fetching prediction for id: ${report.prediction_id}`);
-                    try {
-                        const predictionResponse = await axios.get(`${API_URL}/prediction/results/${report.prediction_id}`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                        });
-                        return {
-                            ...report,
-                            predicted_result: predictionResponse.data.predicted_result,
-                            actual_result: predictionResponse.data.actual_result,
-                        };
-                    } catch (error) {
-                        console.error(`Error fetching prediction for id ${report.prediction_id}:`, error);
-                        message.error(error.message);
-                        return {
-                            ...report,
-                            predicted_result: null,
-                            actual_result: null,
-                        };
-                    }
-                }));
-
-                setReports(updatedReports);
-                setFilteredReports(updatedReports); // Ban đầu hiển thị toàn bộ dữ liệu
-                console.log('Reports with predictions fetched:', updatedReports);
-            } catch (error) {
-                console.error('Error fetching reports:', error);
-                message.error(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchReports();
     }, [API_URL]);
+
+    const handleRefresh = () => {
+        fetchReports();
+    };
 
     // Handle search
     const handleSearch = (value) => {
@@ -434,7 +416,7 @@ const ReportTable = () => {
 
     return (
         <div>
-            <div className="mb-4">
+            <div className="mb-4 flex items-center gap-4">
                 <Input.Search
                     placeholder="Search by Workflow Run ID, Project Name, Branch, or Reported By"
                     onSearch={handleSearch}
@@ -442,6 +424,13 @@ const ReportTable = () => {
                     style={{ width: '37%', minWidth: '200px' }}
                     allowClear
                 />
+                <Button
+                    icon={<ReloadOutlined />}
+                    onClick={handleRefresh}
+                    loading={loading}
+                >
+                    Refresh
+                </Button>
             </div>
             <div className="overflow-x-auto">
                 <Table

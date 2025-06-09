@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Table, Button, Form, Input, message, Space, Select, Spin, Row, Col, Modal, Drawer } from 'antd';
-import { EditOutlined, DeleteOutlined, ReloadOutlined, RedoOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, ReloadOutlined, RedoOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { UserContext } from '../../contexts/UserContext';
 import Badge from "../ui/badge/Badge";
 import axios from 'axios';
@@ -39,6 +39,7 @@ const RepositoryTable = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { width } = useWindowSize();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isHintModalVisible, setIsHintModalVisible] = useState(false);
 
   const API_URL = import.meta.env.VITE_APP_API_URL;
 
@@ -77,7 +78,6 @@ const RepositoryTable = () => {
       setLoading(false);
     }
   };
-
 
   const fetchRepoData = async (repoId) => {
     try {
@@ -231,33 +231,6 @@ const RepositoryTable = () => {
   };
 
   const handleRetry = async (repo) => {
-    // try {
-    //   setProcessing(true);
-    //   const token = localStorage.getItem("token");
-    //   const response = await axios.put(
-    //     `${API_URL}/repos/${repo.id}`,
-    //     {
-    //       url: repo.html_url,
-    //       token: repo.token,
-    //     },
-    //     {
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${token}`,
-    //       },
-    //     }
-    //   );
-
-    //   const updatedRepo = response.data;
-    //   const updatedRepos = repos.map((r) => (r.id === repo.id ? updatedRepo : r));
-    //   setRepos(updatedRepos);
-    //   applyFiltersAndSort(updatedRepos, searchText, statusFilter);
-    //   message.success('Repository retried successfully!');
-    // } catch (error) {
-    //   message.error(error.response?.data?.error || error.message);
-    // } finally {
-    //   setProcessing(false);
-    // }
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -297,6 +270,14 @@ const RepositoryTable = () => {
         }
       },
     });
+  };
+
+  const showHintModal = () => {
+    setIsHintModalVisible(true);
+  };
+
+  const handleHintCancel = () => {
+    setIsHintModalVisible(false);
   };
 
   const columns = [
@@ -395,7 +376,7 @@ const RepositoryTable = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
+      <div className='mb-4'>
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8} lg={6}>
             <Input.Search
@@ -419,8 +400,8 @@ const RepositoryTable = () => {
               ]}
             />
           </Col>
-          <Col xs={24} sm={12} md={8} lg={6}>
-            <Space wrap size="middle">
+          <Col xs={24} sm={24} md={24} lg={8}>
+            <Space size="middle" style={{ display: 'flex' }}>
               <Button
                 type="primary"
                 icon={<EditOutlined />}
@@ -436,6 +417,13 @@ const RepositoryTable = () => {
                 loading={loading}
               >
                 Refresh
+              </Button>
+              <Button
+                icon={<QuestionCircleOutlined />}
+                onClick={showHintModal}
+                style={{ color: '#1890ff' }}
+              >
+                Hint
               </Button>
             </Space>
           </Col>
@@ -603,6 +591,32 @@ const RepositoryTable = () => {
           </div>
         )}
       </Drawer>
+
+      <Modal
+        title="GitHub Token Hint"
+        open={isHintModalVisible}
+        onOk={handleHintCancel}
+        onCancel={handleHintCancel}
+        okText="Close"
+        cancelButtonProps={{ style: { display: 'none' } }}
+        width={Math.min(window.innerWidth * 0.9, 600)}
+      >
+        <div>
+          <h3 className="text-lg font-semibold mb-2">How to Create a GitHub Personal Access Token (PAT)</h3>
+          <p className="mb-2">Follow these steps to generate a token with read-only access:</p>
+          <ol className="list-decimal pl-5 mb-2">
+            <li>Go to <a href="https://github.com/settings/profile" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub Profile</a> {'>'} <strong>Settings</strong> {'>'} <strong>Developer settings</strong> {'>'} <strong>Personal access tokens</strong> {'>'} <strong>Tokens (classic)</strong>.</li>
+            <li>Click <strong>Generate new token (classic)</strong>.</li>
+            <li>Enter a name (e.g., "ReadOnlyToken") and select an expiration date (or "No expiration" if needed).</li>
+            <li>Select the following scopes (permissions):<br />
+              - <strong>repo</strong>: Enable and select only <strong>repo:status</strong> (for public repos) or <strong>repo</strong> (for private repos).<br />
+              - <strong>workflow</strong>: Enable <strong>read:packages</strong> if you need to read workflow data.</li>
+            <li>Click <strong>Generate token</strong>, then copy the token immediately (it won’t be shown again).</li>
+            <li>Store the token securely (e.g., in a password manager) and do not share it.</li>
+          </ol>
+          <p className="mt-2"><strong>Note:</strong> A read-only token is sufficient for accessing repository data. Avoid granting write or admin permissions unless necessary.</p>
+        </div>
+      </Modal>
     </div>
   );
 };
