@@ -25,7 +25,7 @@ export default function StatisticsChart({ userId, repoId, branch }: { userId: st
   const [pipelineData, setPipelineData] = useState<PipelineData[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   // Fetch pipeline data từ API
   useEffect(() => {

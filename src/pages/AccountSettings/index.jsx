@@ -17,7 +17,7 @@ export default function AccountSettings() {
 
   const userId = user?.id || null;
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   useEffect(() => {
     if (!userId) {

@@ -43,7 +43,7 @@ function PredictionHistory() {
   const [currentRunId, setCurrentRunId] = useState(null);
   const { width } = useWindowSize();
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
   const GHTORRENT_API_URL = import.meta.env.VITE_GHTORRENT_API_URL;
 
   // Fetch repositories

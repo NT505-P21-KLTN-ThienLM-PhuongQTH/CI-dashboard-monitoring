@@ -22,7 +22,7 @@ const UserTable = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   const getInitial = useCallback((name) => {
     return name ? name.charAt(0).toUpperCase() : "U";

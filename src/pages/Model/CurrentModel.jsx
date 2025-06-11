@@ -13,7 +13,7 @@ function CurrentModel() {
   const [modelData, setModelData] = useState(null);
   const [appSelectedModel, setAppSelectedModel] = useState("Stacked-LSTM");
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   // Fetch model info
   useEffect(() => {

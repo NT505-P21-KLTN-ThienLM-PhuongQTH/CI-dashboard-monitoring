@@ -41,7 +41,7 @@ export default function PipelineFailurePredictionChart({
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   // Fetch latest prediction based on project_name and branch
   useEffect(() => {

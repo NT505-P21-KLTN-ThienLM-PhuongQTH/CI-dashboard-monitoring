@@ -41,7 +41,7 @@ const RepositoryTable = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isHintModalVisible, setIsHintModalVisible] = useState(false);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   const fetchRepos = async () => {
     setLoading(true);

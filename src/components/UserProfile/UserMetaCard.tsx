@@ -16,7 +16,7 @@ export default function UserMetaCard({ userData }) {
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   useEffect(() => {
     setFormData({

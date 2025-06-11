@@ -16,7 +16,7 @@ export default function WebhookSettingsCard({ repos, userId }) {
   const [configuredWebhooks, setConfiguredWebhooks] = useState([]);
   const [showSecret, setShowSecret] = useState({});
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   const fetchConfiguredWebhooks = async () => {
     if (!userId) {

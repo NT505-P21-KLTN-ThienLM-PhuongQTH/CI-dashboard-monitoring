@@ -17,7 +17,7 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedWorkflowRun, setSelectedWorkflowRun] = useState(null);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   const fetchWorkflowRuns = async (page = 1, filters = {}, sorter = {}) => {
     setLoading(true);

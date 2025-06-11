@@ -17,7 +17,7 @@ function PredictionMetric() {
   const [loading, setLoading] = useState(false);
   const [metricsLoading, setMetricsLoading] = useState(false);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
   const GHTORRENT_API_URL = import.meta.env.VITE_GHTORRENT_API_URL;
 
   // Fetch repositories

@@ -19,7 +19,7 @@ export default function NotificationDropdown() {
   const [selectedWorkflowRun, setSelectedWorkflowRun] = useState(null);
   const [repoData, setRepoData] = useState(null);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   const fetchCommits = async () => {
     try {

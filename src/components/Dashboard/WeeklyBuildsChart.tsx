@@ -21,7 +21,7 @@ export default function WeeklyBuildsChart({ userId, repoId, branch, workflowId }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   useEffect(() => {
     const fetchBuildData = async () => {

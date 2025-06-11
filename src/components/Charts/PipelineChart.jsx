@@ -24,6 +24,8 @@ const PipelineChart = ({ selectedRepoId, selectedBranch, selectedWorkflowId }) =
   const [chartDataRaw, setChartDataRaw] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
+
   useEffect(() => {
     const fetchPipelineData = async () => {
       if (!selectedRepoId || !selectedBranch || !selectedWorkflowId) {
@@ -33,7 +35,7 @@ const PipelineChart = ({ selectedRepoId, selectedBranch, selectedWorkflowId }) =
 
       setLoading(true);
       try {
-        let url = `http://localhost:5000/api/workflow_run/pipeline-data?user_id=${user.id}&timeUnit=${timeUnit}&recentDays=500`;
+        let url = `${API_URL}/workflow_run/pipeline-data?user_id=${user.id}&timeUnit=${timeUnit}&recentDays=500`;
         if (selectedRepoId) {
           url += `&repo_id=${selectedRepoId}`;
         }

@@ -22,7 +22,7 @@ const NotificationTable = () => {
     total: 0
   });
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   const fetchCommits = async (page = 1, pageSize = 10) => {
     setLoading(true);

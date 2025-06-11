@@ -25,7 +25,7 @@ export default function Workflows() {
   const [selectedWorkflowDetails, setSelectedWorkflowDetails] = useState(null);
   const [editorTheme, setEditorTheme] = useState("vs"); // Mặc định là light theme
 
-  const API_URL = import.meta.env.VITE_APP_API_URL;
+  const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
 
   // Phát hiện theme dark/light từ class của document
   useEffect(() => {
