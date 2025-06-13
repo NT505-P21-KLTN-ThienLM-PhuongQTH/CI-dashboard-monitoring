@@ -32,8 +32,10 @@ on:
         required: true
       HARBOR_REGISTRY:
         required: true
+      K8S_HUB_TOKEN:
+        required: true
 
-jobs:  
+jobs:
   build_and_push:
     runs-on: ubuntu-latest
     steps:
@@ -46,17 +48,17 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
+
       - name: Set up Docker
         uses: docker/setup-qemu-action@v2
-      
+
       - name: Login to Harbor
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
           registry: ${{ secrets.HARBOR_REGISTRY }}
-      
+
       - name: Set environment variables
         id: set-env
         run: |
@@ -67,16 +69,47 @@ jobs:
             echo "ENVIRONMENT=staging" >> $GITHUB_ENV
           fi
           echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date +%s)" >> $GITHUB_ENV
 
       - name: Build and Push Docker Images
         run: |
           SERVICE_NAME="${REPO_NAME,,}"
           IMAGE_NAME="${{ secrets.HARBOR_REGISTRY }}/${ENVIRONMENT}/${SERVICE_NAME}"
-          TIMESTAMP=$(date +%s)
-          
+
           # Build Docker image
           docker build -t "$IMAGE_NAME:$COMMIT_SHA-$TIMESTAMP" -t "$IMAGE_NAME:latest" .
-          
+
           # Push Docker image
           docker push "$IMAGE_NAME:$COMMIT_SHA-$TIMESTAMP"
           docker push "$IMAGE_NAME:latest"
+
+      - name: Update Kubernetes manifests for CD
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stag')
+        env:
+          K8S_HUB_TOKEN: ${{ secrets.K8S_HUB_TOKEN }}
+        run: |
+          # Install yq for YAML processing
+          sudo snap install yq
+
+          # Clone kubernetes-hub repository
+          git clone https://x-access-token:$K8S_HUB_TOKEN@github.com/NT505-P21-KLTN-ThienLM-PhuongQTH/kubernetes-hub.git
+          cd kubernetes-hub
+
+          # Map REPO_NAME to manifest directory
+          MANIFEST_DIR="manifests/base/$REPO_NAME"
+          DEPLOYMENT_FILE="$MANIFEST_DIR/deployment.yml"
+
+          if [ -f "$DEPLOYMENT_FILE" ]; then
+            # Update image in deployment.yml
+            yq eval -i ".spec.template.spec.containers[0].image = \"${{ secrets.HARBOR_REGISTRY }}/${ENVIRONMENT}/${REPO_NAME,,}:${COMMIT_SHA}-${TIMESTAMP}\"" "$DEPLOYMENT_FILE"
+
+            # Commit and push changes
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add "$DEPLOYMENT_FILE"
+            git commit -m "Update ${REPO_NAME} image to ${{ secrets.HARBOR_REGISTRY }}/${ENVIRONMENT}/${REPO_NAME,,}:${COMMIT_SHA}-${TIMESTAMP}"
+            git push origin main
+          else
+            echo "Error: $DEPLOYMENT_FILE not found. Skipping CD step."
+            exit 1
+          fi
