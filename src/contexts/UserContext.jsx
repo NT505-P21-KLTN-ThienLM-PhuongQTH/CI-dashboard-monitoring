@@ -41,7 +41,7 @@ const UserProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     try {
-        const response = await axiosInstance.post('/auth/register', {
+        const response = await axiosInstance.post('/api/auth/register', {
             name,
             email,
             password,
@@ -72,7 +72,7 @@ const UserProvider = ({ children }) => {
 
   const loginWithCredentials = async (email, password) => {
     try {
-        const response = await axiosInstance.post('/auth/login', {
+        const response = await axiosInstance.post('/api/auth/login', {
             email,
             password,
         });
