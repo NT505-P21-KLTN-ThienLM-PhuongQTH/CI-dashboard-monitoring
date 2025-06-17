@@ -1,0 +1,73 @@
+name: Snyk Scan
+on:
+  workflow_call:
+    inputs:
+      branch:
+        type: string
+        required: false
+    secrets:
+      SNYK_TOKEN:
+        required: true
+
+jobs:
+  detect-and-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: ${{ hashFiles('package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Python
+        if: ${{ hashFiles('requirements.txt') != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
+
+      - name: Set up Ruby
+        if: ${{ hashFiles('Gemfile') != '' }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Authenticate with Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      # --- Node.js / TypeScript scan ---
+      - name: Snyk scan for Node.js (package.json)
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          snyk test
+          snyk code test
+          snyk monitor
+
+      # --- Python scan ---
+      - name: Snyk scan for Python (requirements.txt)
+        if: ${{ hashFiles('requirements.txt') != '' }}
+        run: |
+          pip install -r requirements.txt
+          snyk test --file=requirements.txt --package-manager=pip
+          snyk monitor --file=requirements.txt --package-manager=pip
+
+      # --- Ruby scan ---
+      - name: Snyk scan for Ruby (Gemfile)
+        if: ${{ hashFiles('Gemfile') != '' }}
+        run: |
+          gem install bundler
+          bundle install
+          snyk test --file=Gemfile.lock --package-manager=rubygems
+          snyk monitor --file=Gemfile.lock --package-manager=rubygems
+
+      # --- Docker scan ---
+      - name: Snyk scan for Dockerfile
+        if: ${{ hashFiles('Dockerfile') != '' }}
+        run: |
+          docker build -t local-image .
+          snyk container test local-image
+          snyk container monitor local-image

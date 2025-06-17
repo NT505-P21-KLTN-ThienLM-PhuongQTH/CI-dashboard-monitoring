@@ -42,7 +42,15 @@ on:
         required: true
 
 jobs:
+  snyk_scan:
+    uses: ./.github/workflows/snyk.yml
+    with:
+      branch: ${{ inputs.branch }}
+    secrets:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   sonar_scan:
+    needs: snyk_scan
     uses: ./.github/workflows/sonarqube.yml
     with:
       branch: ${{ inputs.branch }}
