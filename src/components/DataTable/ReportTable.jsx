@@ -29,7 +29,6 @@ const ReportTable = () => {
             const reportsData = response.data;
 
             const updatedReports = await Promise.all(reportsData.map(async (report) => {
-                console.log(`Fetching prediction for id: ${report.prediction_id}`);
                 try {
                     const predictionResponse = await axios.get(`${API_URL}/prediction/results/${report.prediction_id}`, {
                         headers: { Authorization: `Bearer ${token}` },
@@ -52,7 +51,6 @@ const ReportTable = () => {
 
             setReports(updatedReports);
             setFilteredReports(updatedReports);
-            console.log('Reports with predictions fetched:', updatedReports);
         } catch (error) {
             console.error('Error fetching reports:', error);
             message.error(error.message);

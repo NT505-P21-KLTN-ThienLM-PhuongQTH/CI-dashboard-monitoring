@@ -25,7 +25,6 @@ function PredictionMetric() {
     const fetchRepos = async () => {
       setLoading(true);
       try {
-        console.log(`Fetching repositories for user_id: ${user.id}`);
         const token = localStorage.getItem("token");
         const reposResponse = await axios.get(`${API_URL}/repos?user_id=${user.id}`, {
           headers: {
@@ -33,7 +32,6 @@ function PredictionMetric() {
           },
         });
         const reposData = reposResponse.data;
-        console.log("Repositories fetched:", reposData);
         setRepos(reposData);
         if (reposData.length > 0) {
           setSelectedRepoId(reposData[0].id);
@@ -64,9 +62,6 @@ function PredictionMetric() {
 
       setLoading(true);
       try {
-        console.log(
-          `Fetching branches for user_id: ${user.id}, repo_id: ${selectedRepoId}`
-        );
         const token = localStorage.getItem("token");
         const branchesResponse = await axios.get(
           `${API_URL}/workflow_run/branches?user_id=${user.id}&repo_id=${selectedRepoId}`,
@@ -77,7 +72,6 @@ function PredictionMetric() {
           }
         );
         const branchesData = branchesResponse.data;
-        console.log("Branches fetched:", branchesData);
         setBranches(branchesData);
         setSelectedBranch(branchesData.length > 0 ? branchesData[0] : null);
       } catch (error) {
@@ -103,7 +97,6 @@ function PredictionMetric() {
 
       setLoading(true);
       try {
-        console.log(`Fetching repo data for repo_id: ${selectedRepoId}`);
         const token = localStorage.getItem("token");
         const repoResponse = await axios.get(`${API_URL}/repoData/${selectedRepoId}`, {
           headers: {
@@ -111,7 +104,6 @@ function PredictionMetric() {
           },
         });
         const repoData = repoResponse.data;
-        console.log("Repo data fetched:", repoData);
         setRepoData(repoData);
       } catch (error) {
         console.error("Error in fetchRepoData:", error);
@@ -132,13 +124,10 @@ function PredictionMetric() {
         setCiBuilds([]);
         return;
       }
-      console.log(GHTORRENT_API_URL);
-
       setMetricsLoading(true);
       try {
         const projectName = repoData.full_name;
         const branch = selectedBranch;
-        console.log(`Fetching CI builds for project_name: ${projectName}, branch: ${branch}`);
         const ciBuildsResponse = await axios.get(`${GHTORRENT_API_URL}/ci_builds`, {
           params: {
             project_name: projectName,
@@ -147,14 +136,12 @@ function PredictionMetric() {
         });
 
         const ciBuildsData = ciBuildsResponse.data.ci_builds || [];
-        console.log("CI builds fetched:", ciBuildsData);
 
         const cleanedCiBuildsData = ciBuildsData.map(build => {
           const { _id, ...rest } = build;
           return rest;
         });
 
-        console.log("CI builds after removing _id:", cleanedCiBuildsData);
         setCiBuilds(cleanedCiBuildsData);
       } catch (error) {
         console.error("Error in fetchCiBuilds:", error);
@@ -222,7 +209,6 @@ function PredictionMetric() {
               className="w-full"
               placeholder="Select a repository"
               onChange={(value) => {
-                console.log("Selected repo_id:", value);
                 setSelectedRepoId(value);
               }}
               value={selectedRepoId}
@@ -249,7 +235,6 @@ function PredictionMetric() {
               className="w-full"
               placeholder="Select a branch"
               onChange={(value) => {
-                console.log("Selected branch:", value);
                 setSelectedBranch(value);
               }}
               value={selectedBranch}

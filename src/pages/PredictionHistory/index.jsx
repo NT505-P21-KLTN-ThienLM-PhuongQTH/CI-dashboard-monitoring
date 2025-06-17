@@ -51,7 +51,6 @@ function PredictionHistory() {
     const fetchRepos = async () => {
       setLoading(true);
       try {
-        console.log(`Fetching repositories for user_id: ${user.id}`);
         const token = localStorage.getItem("token");
         const reposResponse = await axios.get(`${API_URL}/repos?user_id=${user.id}`, {
           headers: {
@@ -59,7 +58,6 @@ function PredictionHistory() {
           },
         });
         const reposData = reposResponse.data;
-        console.log("Repositories fetched:", reposData);
         setRepos(reposData);
         if (reposData.length > 0) {
           setSelectedRepoId(reposData[0].id);
@@ -90,9 +88,6 @@ function PredictionHistory() {
 
       setLoading(true);
       try {
-        console.log(
-          `Fetching branches for user_id: ${user.id}, repo_id: ${selectedRepoId}`
-        );
         const token = localStorage.getItem("token");
         const branchesResponse = await axios.get(
           `${API_URL}/workflow_run/branches?user_id=${user.id}&repo_id=${selectedRepoId}`,
@@ -103,7 +98,6 @@ function PredictionHistory() {
           }
         );
         const branchesData = branchesResponse.data;
-        console.log("Branches fetched:", branchesData);
         setBranches(branchesData);
         setSelectedBranch(branchesData.length > 0 ? branchesData[0] : null);
       } catch (error) {
@@ -145,15 +139,11 @@ function PredictionHistory() {
           },
         });
         const runsData = runsResponse.data.runs || [];
-        console.log("Workflow runs fetched:", runsData);
 
         // Fetch predictions in batch
         if (runsData.length > 0) {
           const runIds = runsData.map(run => run.github_run_id).join(",");
           try {
-            console.log(
-              `Fetching batch predictions for run_ids=${runIds}, project_name=${projectName}, branch=${selectedBranch}`
-            );
             const predictionResponse = await axios.get(
               `${API_URL}/prediction/batch?github_run_ids=${runIds}&project_name=${projectName}&branch=${selectedBranch}`,
               {
@@ -162,7 +152,6 @@ function PredictionHistory() {
                 },
               }
             );
-            console.log("Batch prediction response:", predictionResponse.data);
             setPredictions(predictionResponse.data);
 
             // Only keep runs that have predictions
@@ -500,7 +489,6 @@ function PredictionHistory() {
               className="w-full"
               placeholder="Select a repository"
               onChange={(value) => {
-                console.log("Selected repo_id:", value);
                 setSelectedRepoId(value);
               }}
               value={selectedRepoId}
@@ -527,7 +515,6 @@ function PredictionHistory() {
               className="w-full"
               placeholder="Select a branch"
               onChange={(value) => {
-                console.log("Selected branch:", value);
                 setSelectedBranch(value);
               }}
               value={selectedBranch}

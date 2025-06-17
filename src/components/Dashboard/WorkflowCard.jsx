@@ -32,7 +32,6 @@ export default function WorkflowCard({ workflowId }) {
           },
         });
         setWorkflowDetails(response.data);
-        console.log("Workflow details:", response.data);
       } catch (err) {
         setError(err.response?.data?.error || err.message);
       } finally {

@@ -103,7 +103,6 @@ export default function Workflows() {
         setWorkflows(newWorkflows);
         if (newWorkflows.length > 0) {
           setSelectedWorkflow(newWorkflows[0]);
-          console.log("Selected Workflow set to:", newWorkflows[0]);
         }
       } catch (error) {
         console.error("Error in fetchWorkflows:", error);
@@ -124,14 +123,12 @@ export default function Workflows() {
         setWorkflowContent("");
         setOriginalContent("");
         setCurrentBranch(null);
-        console.log("Reset content due to invalid state:", { selectedWorkflow, workflows });
         return;
       }
 
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        console.log("Fetching content for:", { workflow_id: selectedWorkflow.id, repo_id: selectedRepoId });
         const response = await axios.get(
           `${API_URL}/workflow/content?workflow_id=${selectedWorkflow.id}&repo_id=${selectedRepoId}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -141,7 +138,6 @@ export default function Workflows() {
         setWorkflowContent(content);
         setOriginalContent(content);
         setCurrentBranch(branch);
-        console.log("Content fetched successfully:", { content, branch });
       } catch (error) {
         console.error("Error in fetchWorkflowContent:", error);
         message.error(error.response?.data?.error || error.message);

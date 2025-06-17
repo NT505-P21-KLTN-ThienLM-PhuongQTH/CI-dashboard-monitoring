@@ -64,8 +64,6 @@ const WorkflowRunsTable = ({ title, workflowId, selectedBranch }) => {
         message.error("No authentication token found. Please log in again.");
         return;
       }
-      console.log("Token:", token); // Debug token
-      console.log("Request URL:", `${API_URL}/workflow_run/runs/${runId}/rerun?user_id=${userId}`);
 
       const response = await axios.post(
         `${API_URL}/workflow_run/runs/${runId}/rerun?user_id=${userId}`,

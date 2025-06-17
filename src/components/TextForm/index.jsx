@@ -26,7 +26,6 @@ function Form({ formType, heading, subHeading, handleResponse }) {
 
     const onSubmit = async (event) => {
         event.preventDefault();
-        console.log('Form values:', values);
         if (formType === 'register') {
             if (values.password !== values.confirmPassword) {
                 toast.error('Passwords do not match!', {
@@ -50,7 +49,6 @@ function Form({ formType, heading, subHeading, handleResponse }) {
         }
         try {
             const response = await authenticate(values);
-            console.log('Response:', response);
             if (response.success) {
                 handleResponse(response);
                 setError(null);

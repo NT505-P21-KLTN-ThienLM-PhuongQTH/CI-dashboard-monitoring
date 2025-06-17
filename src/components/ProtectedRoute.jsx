@@ -4,8 +4,6 @@ import { useUser } from "../contexts/UserContext";
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user } = useUser();
 
-  console.log("ProtectedRoute user:", user); 
-
   if (!user.auth) {
     return <Navigate to="/login" replace />;
   }

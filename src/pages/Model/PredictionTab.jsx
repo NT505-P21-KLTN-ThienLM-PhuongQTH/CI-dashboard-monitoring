@@ -68,7 +68,6 @@ const PredictionTab = ({ modelData }) => {
         timestamp: data.timestamp,
         data: data, // Lưu toàn bộ response
       });
-      console.log("Prediction API response:", data);
     } catch (error) {
       message.error(error?.response?.data?.message || error.message || "Error calling prediction API.");
       setPredictionResult(null);

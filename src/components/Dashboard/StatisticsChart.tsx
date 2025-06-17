@@ -51,7 +51,6 @@ export default function StatisticsChart({ userId, repoId, branch }: { userId: st
 
         const data: PipelineData[] = response.data;
         setPipelineData(data);
-        console.log("Fetched pipeline data:", data);
 
         // Cập nhật availableYears dựa trên dữ liệu trả về
         const years = [...new Set(data.map(item => new Date(item.date).getFullYear()))];

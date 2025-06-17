@@ -14,7 +14,7 @@ const useAuthentication = (formType) => {
                     ? await loginWithCredentials(credentials.email, credentials.password)
                     : await register(credentials.name, credentials.email, credentials.password);
 
-            console.log('Authentication result:', result);
+            // console.log('Authentication result:', result);
 
             setLoading(false);
             if (result.success) {

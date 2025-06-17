@@ -38,7 +38,6 @@ function Dashboard() {
     const fetchRepos = async () => {
       setLoading(true);
       try {
-        console.log(`Fetching repositories for user_id: ${user.id}`);
         const token = localStorage.getItem("token");
         const reposResponse = await axios.get(`${API_URL}/repos?user_id=${user.id}`, {
           headers: {
@@ -46,7 +45,6 @@ function Dashboard() {
           },
         });
         const reposData = reposResponse.data;
-        console.log("Repositories fetched:", reposData);
         setRepos(reposData);
         if (reposData.length > 0) {
           setSelectedRepoId(reposData[0].id);
@@ -87,9 +85,6 @@ function Dashboard() {
 
       setLoading(true);
       try {
-        console.log(
-          `Fetching branches for user_id: ${user.id}, repo_id: ${selectedRepoId}`
-        );
         const token = localStorage.getItem("token");
         const branchesResponse = await axios.get(
           `${API_URL}/workflow_run/branches?user_id=${user.id}&repo_id=${selectedRepoId}`,
@@ -100,7 +95,6 @@ function Dashboard() {
           }
         );
         const branchesData = branchesResponse.data;
-        console.log("Branches fetched:", branchesData);
         setBranches(branchesData);
         setSelectedBranch(branchesData.length > 0 ? branchesData[0] : null);
       } catch (error) {
@@ -146,9 +140,6 @@ function Dashboard() {
 
       setLoading(true);
       try {
-        console.log(
-          `Fetching workflows for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}`
-        );
         const token = localStorage.getItem("token");
         const workflowsResponse = await axios.get(
           `${API_URL}/workflow/with-runs?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}`,
@@ -159,7 +150,6 @@ function Dashboard() {
           }
         );
         const workflowsData = workflowsResponse.data;
-        console.log("Workflows fetched:", workflowsData);
         setWorkflows(workflowsData);
         setSelectedWorkflowId(workflowsData.length > 0 ? workflowsData[0].id : null);
       } catch (error) {
@@ -201,9 +191,6 @@ function Dashboard() {
 
       setLoading(true);
       try {
-        console.log(
-          `Fetching pipeline stats for user_id: ${user.id}, repo_id: ${selectedRepoId}, branch: ${selectedBranch}, workflow_id: ${selectedWorkflowId}`
-        );
         const token = localStorage.getItem("token");
         const statsResponse = await axios.get(
           `${API_URL}/workflow_run/pipeline-stats?user_id=${user.id}&repo_id=${selectedRepoId}&branch=${selectedBranch}&workflow_id=${selectedWorkflowId}`,
@@ -214,7 +201,6 @@ function Dashboard() {
           }
         );
         const statsData = statsResponse.data;
-        console.log("Pipeline stats fetched:", statsData);
         setPipelineStats(statsData);
       } catch (error) {
         console.error("Error in fetchPipelineStats:", error);
@@ -256,7 +242,6 @@ function Dashboard() {
               className="w-full"
               placeholder="Select a repository"
               onChange={(value) => {
-                console.log("Selected repo_id:", value);
                 setSelectedRepoId(value);
               }}
               value={selectedRepoId}
@@ -283,7 +268,6 @@ function Dashboard() {
               className="w-full"
               placeholder="Select a branch"
               onChange={(value) => {
-                console.log("Selected branch:", value);
                 setSelectedBranch(value);
               }}
               value={selectedBranch}
@@ -311,7 +295,6 @@ function Dashboard() {
               className="w-full"
               placeholder="Select a workflow"
               onChange={(value) => {
-                console.log("Selected workflow_id:", value);
                 setSelectedWorkflowId(value);
               }}
               value={selectedWorkflowId}

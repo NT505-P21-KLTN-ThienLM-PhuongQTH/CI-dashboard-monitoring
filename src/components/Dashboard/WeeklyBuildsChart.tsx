@@ -42,7 +42,6 @@ export default function WeeklyBuildsChart({ userId, repoId, branch, workflowId }
           throw new Error(errorData.error || "Failed to fetch pipeline data");
         }
         const data = await response.json();
-        console.log("Fetched data:", data);
         setRawData(data);
         updateChartData(data, displayMode);
       } catch (err) {
