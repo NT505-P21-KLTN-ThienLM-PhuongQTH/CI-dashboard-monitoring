@@ -107,7 +107,7 @@ jobs:
           docker push "$IMAGE_NAME:latest"
 
       - name: Update Kubernetes manifests for CD
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stag')
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/stag'
         env:
           K8S_HUB_TOKEN: ${{ secrets.K8S_HUB_TOKEN }}
         run: |
