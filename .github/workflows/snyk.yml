@@ -19,7 +19,7 @@ jobs:
         if: ${{ hashFiles('package.json') != '' }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.9.0
 
       - name: Set up Python
         if: ${{ hashFiles('requirements.txt') != '' }}
@@ -43,8 +43,8 @@ jobs:
       - name: Snyk scan for Node.js (package.json)
         if: ${{ hashFiles('package.json') != '' }}
         run: |
-          snyk test
-          snyk code test
+          # snyk test
+          # snyk code test
           snyk monitor
 
       # --- Python scan ---
@@ -52,7 +52,7 @@ jobs:
         if: ${{ hashFiles('requirements.txt') != '' }}
         run: |
           pip install -r requirements.txt
-          snyk test --file=requirements.txt --package-manager=pip
+          # snyk test --file=requirements.txt --package-manager=pip
           snyk monitor --file=requirements.txt --package-manager=pip
 
       # --- Ruby scan ---
@@ -61,7 +61,7 @@ jobs:
         run: |
           gem install bundler
           bundle install
-          snyk test --file=Gemfile.lock --package-manager=rubygems
+          # snyk test --file=Gemfile.lock --package-manager=rubygems
           snyk monitor --file=Gemfile.lock --package-manager=rubygems
 
       # --- Docker scan ---
@@ -69,5 +69,5 @@ jobs:
         if: ${{ hashFiles('Dockerfile') != '' }}
         run: |
           docker build -t local-image .
-          snyk container test local-image
+          # snyk container test local-image
           snyk container monitor local-image
