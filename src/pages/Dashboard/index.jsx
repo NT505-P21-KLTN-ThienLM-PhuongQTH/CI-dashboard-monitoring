@@ -39,7 +39,11 @@ function Dashboard() {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const reposResponse = await axios.get(`${API_URL}/repos?user_id=${user.id}`, {
+        const url =
+          user?.role === "admin"
+            ? `${API_URL}/repos/all`
+            : `${API_URL}/repos?user_id=${user.id}`;
+        const reposResponse = await axios.get(url, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -62,7 +66,7 @@ function Dashboard() {
     } else {
       console.warn("User ID is not available");
     }
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   useEffect(() => {
     const fetchBranches = async () => {
