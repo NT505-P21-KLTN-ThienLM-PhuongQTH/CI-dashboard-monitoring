@@ -8,24 +8,6 @@ import { CopyOutlined, DownloadOutlined, WarningOutlined } from "@ant-design/ico
 import Badge from "../../components/ui/badge/Badge";
 
 const { Search } = Input;
-const useWindowSize = () => {
-  const [windowSize, setWindowSize] = useState({
-    width: undefined,
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return windowSize;
-};
 
 function PredictionHistory() {
   const { user } = useContext(UserContext);
@@ -41,7 +23,6 @@ function PredictionHistory() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [ciBuilds, setCiBuilds] = useState([]);
   const [currentRunId, setCurrentRunId] = useState(null);
-  const { width } = useWindowSize();
 
   const API_URL = `${import.meta.env.VITE_APP_API_URL}/api`;
   const GHTORRENT_API_URL = import.meta.env.VITE_GHTORRENT_API_URL;
@@ -244,9 +225,37 @@ function PredictionHistory() {
       okText: "Yes",
       okType: "default",
       cancelText: "No",
-      onOk() {
-        message.success("Report sent to admin successfully!");
-        // Thêm logic gửi báo cáo ở đây (ví dụ: gọi API)
+      onOk: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) {
+            throw new Error("No authentication token found");
+          }
+          if (!user.email) {
+            throw new Error("User email not available");
+          }
+
+          await axios.post(
+            `${API_URL}/report`,
+            {
+              github_run_id: currentRunId,
+              reported_by: user.email,
+            },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          message.success("Report sent to admin successfully!");
+          setIsModalVisible(false);
+          setCurrentRunId(null);
+        } catch (error) {
+          console.error("Error reporting to admin:", error.response?.data || error.message);
+          message.error(error.response?.data?.error || "Failed to send report. Please try again.");
+        }
       },
       onCancel() {
         message.info("Report cancelled.");
@@ -376,39 +385,12 @@ function PredictionHistory() {
       width: 100,
       render: (time) => (time ? time.toFixed(3) : "-"),
     },
-    // {
-    //   title: "Probability",
-    //   dataIndex: "probability",
-    //   key: "probability",
-    //   width: 100,
-    //   render: (prob) => (prob ? prob.toFixed(4) : "-"),
-    // },
-    // {
-    //   title: "Threshold",
-    //   dataIndex: "threshold",
-    //   key: "threshold",
-    //   width: 100,
-    //   render: (threshold) => (threshold ? threshold.toFixed(4) : "-"),
-    // },
     {
       title: "Conclusion",
       dataIndex: "conclusion",
       key: "conclusion",
       width: 120,
       fixed: "right",
-      // filters: [
-      //   { text: "success", value: "success" },
-      //   { text: "failure", value: "failure" },
-      //   { text: "neutral", value: "neutral" },
-      //   { text: "cancelled", value: "cancelled" },
-      //   { text: "skipped", value: "skipped" },
-      //   { text: "stale", value: "stale" },
-      //   { text: "action_required", value: "action_required" },
-      //   { text: "timed_out", value: "timed_out" },
-      //   { text: "startup_failure", value: "startup_failure" },
-      //   { text: "null", value: "" },
-      // ],
-      // onFilter: (value, record) => record.conclusion === value,
       render: (conclusion) => (
         <div style={{ textAlign: "center" }}>
           <Badge
@@ -579,7 +561,7 @@ function PredictionHistory() {
       <Modal
         title={
           <div className="flex justify-between items-center">
-            <span>CI Build Details</span>
+            <span>CI Build Data</span>
             <Space style={{ marginRight: "40px" }}>
               <Button icon={<CopyOutlined />} onClick={handleCopy}>
                 Copy
@@ -596,12 +578,12 @@ function PredictionHistory() {
           setCurrentRunId(null);
         }}
         footer={
-          currentRunId && runs.length > 0 && ciBuilds.ci_builds?.length > 0 ? (
+          currentRunId && runs.length > 0 && ciBuilds?.ci_builds?.length > 0 ? (
             <div style={{ textAlign: "right" }}>
               {(() => {
                 const run = runs.find(r => r.github_run_id === currentRunId);
                 const prediction = predictions[currentRunId];
-                const predictedResult = prediction?.predicted_result === true ? "failure" : prediction?.predicted_result === false ? "success" : null;
+                const predictedResult = prediction?.predicted_result === true ? "failure" : prediction?.predicted_result === false ? "success" : "";
                 const actualResult = run?.conclusion;
                 const isMismatch = predictedResult && actualResult && predictedResult !== actualResult;
                 return isMismatch ? (
