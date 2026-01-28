@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ant-design/plots": "^2.3.3",
+    "@ant-design/plots": "^2.4.0",
     "@heroicons/react": "^1.0.6",
     "@monaco-editor/react": "^4.7.0",
     "@syncfusion/ej2-base": "^29.1.36",
